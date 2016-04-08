@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.LongConsumer;
 
 import static java.lang.Thread.currentThread;
 
@@ -19,12 +20,15 @@ public final class UnicastReceiver
     private static final int MTU_SIZE = 1500;
 
     private final SocketAddress address;
+    private final LongConsumer transmitLatencyHandler;
     private volatile int receiveBufferSize = UNSET;
 
     public UnicastReceiver(
-            final SocketAddress address)
+            final SocketAddress address,
+            final LongConsumer transmitLatencyHandler)
     {
         this.address = address;
+        this.transmitLatencyHandler = transmitLatencyHandler;
     }
 
     public void receiveLoop()
@@ -51,6 +55,7 @@ public final class UnicastReceiver
 
                 packetSizeHistogram.recordValue(buffer.remaining());
                 latencyHistogram.recordValue(Math.min(latencyHistogram.getHighestTrackableValue(), transmitLatency));
+                transmitLatencyHandler.accept(transmitLatency);
             }
         }
         catch (IOException e)
