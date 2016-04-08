@@ -7,7 +7,10 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Optional;
 
+import static java.lang.Byte.toUnsignedInt;
 import static java.lang.Integer.toHexString;
 import static java.nio.file.Files.readAllLines;
 
@@ -27,15 +30,24 @@ public final class KernelBufferDepthMonitor
         final int port = inetSocketAddress.getPort();
 
         this.bufferIdentifier = calculateBufferIdentifier(addressOctets, port);
+        System.out.printf("Looking for kernel buffer stats matching %s%n", bufferIdentifier);
     }
 
     public void report()
     {
         try
         {
-            readAllLines(UDP_BUFFER_STATS_FILE).stream().
-                filter(l -> l.contains(bufferIdentifier)).
-                forEach(this::parse);
+            final Optional<String> bufferStatus = readAllLines(UDP_BUFFER_STATS_FILE).stream().
+                    filter(l -> l.contains(bufferIdentifier)).
+                    findAny();
+            if(!bufferStatus.isPresent())
+            {
+                System.out.printf("Could not find buffer status for id: %s%n", bufferIdentifier);
+            }
+            else
+            {
+                parse(bufferStatus.get());
+            }
 
             if(udpBufferStats.changed)
             {
@@ -53,7 +65,7 @@ public final class KernelBufferDepthMonitor
 
     private void parse(final String line)
     {
-        final String[] tokens = line.split("\\s+");
+        final String[] tokens = line.trim().split("\\s+");
         final String[] txRxQueue = tokens[4].split(":");
         final long receiveQueueDepth = Long.parseLong(txRxQueue[1], 16);
         final long drops = Long.parseLong(tokens[12]);
@@ -83,10 +95,10 @@ public final class KernelBufferDepthMonitor
     private static String calculateBufferIdentifier(final byte[] addressOctets, final int port)
     {
         return
-                leftPadTo(2, toHexString(addressOctets[3]).toUpperCase()) +
-                leftPadTo(2, toHexString(addressOctets[2]).toUpperCase()) +
-                leftPadTo(2, toHexString(addressOctets[1]).toUpperCase()) +
-                leftPadTo(2, toHexString(addressOctets[0]).toUpperCase()) +
+                leftPadTo(2, toHexString(toUnsignedInt(addressOctets[3])).toUpperCase()) +
+                leftPadTo(2, toHexString(toUnsignedInt(addressOctets[2])).toUpperCase()) +
+                leftPadTo(2, toHexString(toUnsignedInt(addressOctets[1])).toUpperCase()) +
+                leftPadTo(2, toHexString(toUnsignedInt(addressOctets[0])).toUpperCase()) +
                 ":" +
                 leftPadTo(4, toHexString(port).toUpperCase());
 

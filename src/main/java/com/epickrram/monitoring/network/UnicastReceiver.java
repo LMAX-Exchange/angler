@@ -54,13 +54,18 @@ public final class UnicastReceiver
                 buffer.flip();
                 final long transmitLatency = receivedNanos - buffer.getLong();
 
-                latencyHistogram.recordValue(Math.min(latencyHistogram.getHighestTrackableValue(), transmitLatency));
+                latencyHistogram.recordValue(Math.max(0, Math.min(latencyHistogram.getHighestTrackableValue(), transmitLatency)));
                 receivedCount.incrementAndGet();
                 transmitLatencyHandler.accept(transmitLatency);
             }
         }
+        catch(RuntimeException e)
+        {
+            e.printStackTrace();
+        }
         catch (IOException e)
         {
+            e.printStackTrace();
             throw new UncheckedIOException(e);
         }
         finally

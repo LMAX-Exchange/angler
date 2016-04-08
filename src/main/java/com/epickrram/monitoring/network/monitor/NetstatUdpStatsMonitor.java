@@ -25,9 +25,13 @@ public final class NetstatUdpStatsMonitor
             {
                 udpStats.reset();
                 reader.lines().forEach(l -> {
-                    if(l.contains("receive buffer errors"))
+                    if(l.contains("receive buffer errors")) //or: RcvbufErrors: {value}
                     {
                         udpStats.updateBufferErrors(Long.parseLong(l.trim().split("\\s+")[0]));
+                    }
+                    else if(l.contains("RcvbufErrors"))
+                    {
+                        udpStats.updateBufferErrors(Long.parseLong(l.trim().split("\\s+")[1]));
                     }
                     else if(l.contains("packet receive errors"))
                     {

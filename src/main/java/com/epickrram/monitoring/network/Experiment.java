@@ -13,6 +13,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.LongConsumer;
 import java.util.function.LongUnaryOperator;
 
+import static com.epickrram.monitoring.network.AffinityWrapper.runOnThread;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class Experiment
@@ -22,6 +23,7 @@ public final class Experiment
     private final TimeUnit experimentRuntimeUnit;
     private final long experimentRuntimeDuration;
     private final SocketAddress address;
+    private final boolean shouldRunSender;
 
     public Experiment(
             final LongUnaryOperator sendingDelayCalculator,
@@ -33,6 +35,7 @@ public final class Experiment
         this.address = config.getAddress();
         this.experimentRuntimeUnit = config.getExperimentRuntimeUnit();
         this.experimentRuntimeDuration = config.getExperimentRuntimeDuration();
+        this.shouldRunSender = config.shouldRunSender();
     }
 
     void execute()
@@ -45,20 +48,31 @@ public final class Experiment
         final SoftIrqHandlerTimeSqueezeMonitor timeSqueezeMonitor = new SoftIrqHandlerTimeSqueezeMonitor();
         final NetstatUdpStatsMonitor netstatUdpStatsMonitor = new NetstatUdpStatsMonitor();
         final SendReceiveCountMonitor sendReceiveCountMonitor =
-                new SendReceiveCountMonitor(sender::getSentCount, receiver::getReceivedCount);
+                new SendReceiveCountMonitor(shouldRunSender ? sender::getSentCount : () -> -1, receiver::getReceivedCount);
 
-        executorService.submit(receiver::receiveLoop);
+        executorService.submit(runOnThread(29, receiver::receiveLoop));
 
         System.out.printf("Receiver SO_RCVBUF set to %d%n%n", receiver.getConfiguredReceiveBufferSize());
 
-        executorService.submit(sender::sendLoop);
+        if(shouldRunSender)
+        {
+            executorService.submit(runOnThread(31, sender::sendLoop));
+        }
 
         executorService.scheduleAtFixedRate(() -> {
-            sendReceiveCountMonitor.report();
-            bufferDepthMonitor.report();
-            timeSqueezeMonitor.report();
-            netstatUdpStatsMonitor.report();
+            try
+            {
+                sendReceiveCountMonitor.report();
+                bufferDepthMonitor.report();
+                timeSqueezeMonitor.report();
+                netstatUdpStatsMonitor.report();
+            }
+            catch(final RuntimeException e)
+            {
+                e.printStackTrace();
+            }
             System.out.println();
+
         }, 1L, 1L, SECONDS);
 
 
