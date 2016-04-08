@@ -46,6 +46,7 @@ public final class KernelBufferDepthMonitor
         }
         catch (final IOException e)
         {
+            e.printStackTrace();
             throw new UncheckedIOException(e);
         }
     }

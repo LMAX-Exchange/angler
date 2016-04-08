@@ -13,6 +13,8 @@ public final class BaselineTestMain
         final LongUnaryOperator sendingDelayCalculator = constant(100, MILLISECONDS);
         final LongConsumer transmitLatencyHandler = l -> {};
 
-        new Experiment(sendingDelayCalculator, transmitLatencyHandler, ExperimentConfig.defaults()).execute();
+        final ExperimentConfig config = args.length == 1 ?
+                ExperimentConfig.withAddress(args[0]) : ExperimentConfig.defaults();
+        new Experiment(sendingDelayCalculator, transmitLatencyHandler, config).execute();
     }
 }

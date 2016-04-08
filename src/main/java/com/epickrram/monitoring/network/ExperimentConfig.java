@@ -1,9 +1,8 @@
 package com.epickrram.monitoring.network;
 
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 public final class ExperimentConfig
@@ -22,19 +21,22 @@ public final class ExperimentConfig
         this.address = address;
     }
 
+    public static ExperimentConfig withAddress(final String addressSpec)
+    {
+        final String[] hostPort = addressSpec.split(":");
+        return withAddress(new InetSocketAddress(hostPort[0], Integer.parseInt(hostPort[1])));
+    }
+
     public static ExperimentConfig defaults()
+    {
+        final InetSocketAddress address = new InetSocketAddress(InetAddress.getLoopbackAddress(), 51000);
+        return withAddress(address);
+    }
+
+    private static ExperimentConfig withAddress(final InetSocketAddress address)
     {
         final TimeUnit experimentRuntimeUnit = TimeUnit.SECONDS;
         final long experimentRuntimeDuration = 30L;
-        final InetSocketAddress address;
-        try
-        {
-            address = new InetSocketAddress(Inet4Address.getLocalHost(), 51000);
-        }
-        catch (final UnknownHostException e)
-        {
-            throw new IllegalStateException("Could not get localhost", e);
-        }
 
         return new ExperimentConfig(experimentRuntimeUnit, experimentRuntimeDuration, address);
     }

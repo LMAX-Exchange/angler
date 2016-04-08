@@ -44,6 +44,7 @@ public final class NetstatUdpStatsMonitor
         }
         catch (final IOException e)
         {
+            e.printStackTrace();
             throw new UncheckedIOException(e);
         }
         catch (final InterruptedException e)

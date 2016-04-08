@@ -34,6 +34,7 @@ public final class SoftIrqHandlerTimeSqueezeMonitor
         }
         catch (final IOException e)
         {
+            e.printStackTrace();
             throw new UncheckedIOException(e);
         }
     }

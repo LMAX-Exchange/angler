@@ -30,6 +30,8 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
+version = new Version(major: 0, revision: 1)
+
 sourceSets {
     main {
         java {
@@ -38,3 +40,23 @@ sourceSets {
     }
 }
 
+task bundleJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'Network Monitoring Bundle',
+                'Implementation-Version': version,
+                'Main-Class': 'com.epickrram.monitoring.network.BaselineTestMain'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+class Version {
+    int major = 1, minor = 0, revision = 1
+    boolean snapshot
+    String stage
+
+    String toString() {
+        "$major.$minor.$revision${stage ? '.' + stage : ''}${snapshot ? '-SNAPSHOT' : ''}"
+    }
+}

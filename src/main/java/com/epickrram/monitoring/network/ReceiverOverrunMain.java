@@ -6,19 +6,20 @@ import java.util.function.LongConsumer;
 import java.util.function.LongUnaryOperator;
 
 import static com.epickrram.monitoring.network.SendingRates.constant;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
-public final class ReceiverBackPressureMain
+public final class ReceiverOverrunMain
 {
-    private static final int PUBLISH_INTERVAL = 100;
-    private static final double RECEIVER_SLOWDOWN_FACTOR = 1.2d;
+    private static final int PUBLISH_INTERVAL = 0;
+    private static final long RECEIVE_INTERVAL = 10;
+    private static final double RECEIVER_SLOWDOWN_FACTOR = 10.2d;
 
     public static void main(final String[] args)
     {
-        final LongUnaryOperator sendingDelayCalculator = constant(PUBLISH_INTERVAL, MILLISECONDS);
+        final LongUnaryOperator sendingDelayCalculator = constant(PUBLISH_INTERVAL, MICROSECONDS);
         final LongConsumer transmitLatencyHandler = l -> {
             final long receiverDelayPerMessage = (long)
-                    (TimeUnit.MILLISECONDS.toNanos(PUBLISH_INTERVAL) *
+                    (TimeUnit.MILLISECONDS.toNanos(RECEIVE_INTERVAL) *
                             RECEIVER_SLOWDOWN_FACTOR);
             LockSupport.parkNanos(receiverDelayPerMessage);
         };
