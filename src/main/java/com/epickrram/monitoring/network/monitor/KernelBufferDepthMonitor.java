@@ -39,7 +39,7 @@ public final class KernelBufferDepthMonitor
 
             if(udpBufferStats.changed)
             {
-                System.out.printf("Drops: %d, depth: %d%n",
+                System.out.printf("Drops: %d, buffer depth: %d%n",
                         udpBufferStats.drops,
                         udpBufferStats.receiveQueueDepth);
             }

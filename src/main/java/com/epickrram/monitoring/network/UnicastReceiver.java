@@ -9,6 +9,7 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.LongConsumer;
 
@@ -21,6 +22,7 @@ public final class UnicastReceiver
 
     private final SocketAddress address;
     private final LongConsumer transmitLatencyHandler;
+    private final AtomicLong receivedCount = new AtomicLong();
     private volatile int receiveBufferSize = UNSET;
 
     public UnicastReceiver(
@@ -53,6 +55,7 @@ public final class UnicastReceiver
                 final long transmitLatency = receivedNanos - buffer.getLong();
 
                 latencyHistogram.recordValue(Math.min(latencyHistogram.getHighestTrackableValue(), transmitLatency));
+                receivedCount.incrementAndGet();
                 transmitLatencyHandler.accept(transmitLatency);
             }
         }
@@ -75,5 +78,10 @@ public final class UnicastReceiver
         }
 
         return receiveBufferSize;
+    }
+
+    public long getReceivedCount()
+    {
+        return receivedCount.get();
     }
 }

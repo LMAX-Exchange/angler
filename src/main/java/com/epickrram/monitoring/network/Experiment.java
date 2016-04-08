@@ -2,6 +2,7 @@ package com.epickrram.monitoring.network;
 
 import com.epickrram.monitoring.network.monitor.KernelBufferDepthMonitor;
 import com.epickrram.monitoring.network.monitor.NetstatUdpStatsMonitor;
+import com.epickrram.monitoring.network.monitor.SendReceiveCountMonitor;
 import com.epickrram.monitoring.network.monitor.SoftIrqHandlerTimeSqueezeMonitor;
 
 import java.net.SocketAddress;
@@ -43,14 +44,21 @@ public final class Experiment
         final KernelBufferDepthMonitor bufferDepthMonitor = new KernelBufferDepthMonitor(address);
         final SoftIrqHandlerTimeSqueezeMonitor timeSqueezeMonitor = new SoftIrqHandlerTimeSqueezeMonitor();
         final NetstatUdpStatsMonitor netstatUdpStatsMonitor = new NetstatUdpStatsMonitor();
+        final SendReceiveCountMonitor sendReceiveCountMonitor =
+                new SendReceiveCountMonitor(sender::getSentCount, receiver::getReceivedCount);
 
         executorService.submit(receiver::receiveLoop);
+
+        System.out.println("Receiver SO_RCVBUF set to " + receiver.getConfiguredReceiveBufferSize());
+
         executorService.submit(sender::sendLoop);
 
         executorService.scheduleAtFixedRate(() -> {
+            sendReceiveCountMonitor.report();
             bufferDepthMonitor.report();
             timeSqueezeMonitor.report();
             netstatUdpStatsMonitor.report();
+            System.out.println();
         }, 1L, 1L, SECONDS);
 
 

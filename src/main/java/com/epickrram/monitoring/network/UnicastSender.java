@@ -5,6 +5,7 @@ import java.io.UncheckedIOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.LongUnaryOperator;
 import java.util.function.Supplier;
@@ -16,6 +17,7 @@ public final class UnicastSender
     private final SocketAddress address;
     private final LongUnaryOperator publicationIntervalCalculator;
     private final Supplier<ByteBuffer> messageFactory;
+    private final AtomicLong sentCount = new AtomicLong();
 
     public UnicastSender(
             final SocketAddress address,
@@ -38,6 +40,7 @@ public final class UnicastSender
             {
                 final ByteBuffer message = messageFactory.get();
                 channel.send(message, address);
+                sentCount.incrementAndGet();
                 LockSupport.parkNanos(publicationIntervalCalculator.applyAsLong(System.nanoTime() - startNanoSeconds));
             }
         }
@@ -45,5 +48,10 @@ public final class UnicastSender
         {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public long getSentCount()
+    {
+        return sentCount.get();
     }
 }
