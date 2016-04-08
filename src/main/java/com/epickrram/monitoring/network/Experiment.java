@@ -49,7 +49,7 @@ public final class Experiment
 
         executorService.submit(receiver::receiveLoop);
 
-        System.out.println("Receiver SO_RCVBUF set to " + receiver.getConfiguredReceiveBufferSize());
+        System.out.printf("Receiver SO_RCVBUF set to %d%n%n", receiver.getConfiguredReceiveBufferSize());
 
         executorService.submit(sender::sendLoop);
 
