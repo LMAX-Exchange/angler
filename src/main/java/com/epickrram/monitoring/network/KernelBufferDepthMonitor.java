@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import static java.lang.Integer.toHexString;
 import static java.nio.file.Files.readAllLines;
@@ -17,6 +16,7 @@ public final class KernelBufferDepthMonitor
     private static final Path UDP_BUFFER_STATS_FILE = Paths.get("/proc/net/udp");
 
     private final String bufferIdentifier;
+    private final UdpBufferStats udpBufferStats = new UdpBufferStats(0L, 0L);
 
     public KernelBufferDepthMonitor(
             final SocketAddress address)
@@ -33,17 +33,15 @@ public final class KernelBufferDepthMonitor
     {
         try
         {
-            final Optional<UdpBufferStats> udpBufferStats =
-                    readAllLines(UDP_BUFFER_STATS_FILE).stream().
-                    filter(l -> l.contains(bufferIdentifier)).
-                    map(KernelBufferDepthMonitor::parse).
-                    findFirst();
+            readAllLines(UDP_BUFFER_STATS_FILE).stream().
+                filter(l -> l.contains(bufferIdentifier)).
+                forEach(this::parse);
 
-            if(udpBufferStats.isPresent())
+            if(udpBufferStats.changed)
             {
                 System.out.printf("Drops: %d, depth: %d%n",
-                        udpBufferStats.get().drops,
-                        udpBufferStats.get().receiveQueueDepth);
+                        udpBufferStats.drops,
+                        udpBufferStats.receiveQueueDepth);
             }
         }
         catch (final IOException e)
@@ -52,20 +50,30 @@ public final class KernelBufferDepthMonitor
         }
     }
 
-    private static UdpBufferStats parse(final String line)
+    private void parse(final String line)
     {
         final String[] tokens = line.split("\\s+");
         final String[] txRxQueue = tokens[4].split(":");
-        return new UdpBufferStats(Long.parseLong(txRxQueue[1], 16), Long.parseLong(tokens[12]));
+        final long receiveQueueDepth = Long.parseLong(txRxQueue[1], 16);
+        final long drops = Long.parseLong(tokens[12]);
+        udpBufferStats.update(receiveQueueDepth, drops);
     }
 
     private static final class UdpBufferStats
     {
-        private final long receiveQueueDepth;
-        private final long drops;
+        private long receiveQueueDepth;
+        private long drops;
+        private boolean changed;
 
         public UdpBufferStats(final long receiveQueueDepth, final long drops)
         {
+            this.receiveQueueDepth = receiveQueueDepth;
+            this.drops = drops;
+        }
+
+        void update(final long receiveQueueDepth, final long drops)
+        {
+            changed = (this.receiveQueueDepth != receiveQueueDepth) || (this.drops != drops);
             this.receiveQueueDepth = receiveQueueDepth;
             this.drops = drops;
         }

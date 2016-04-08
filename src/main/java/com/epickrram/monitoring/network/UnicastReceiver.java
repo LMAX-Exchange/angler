@@ -33,7 +33,6 @@ public final class UnicastReceiver
 
     public void receiveLoop()
     {
-        final Histogram packetSizeHistogram = new Histogram(MTU_SIZE, 4);
         final Histogram latencyHistogram = new Histogram(TimeUnit.MILLISECONDS.toNanos(5L), 3);
 
         try
@@ -53,7 +52,6 @@ public final class UnicastReceiver
                 buffer.flip();
                 final long transmitLatency = receivedNanos - buffer.getLong();
 
-                packetSizeHistogram.recordValue(buffer.remaining());
                 latencyHistogram.recordValue(Math.min(latencyHistogram.getHighestTrackableValue(), transmitLatency));
                 transmitLatencyHandler.accept(transmitLatency);
             }
@@ -64,9 +62,6 @@ public final class UnicastReceiver
         }
         finally
         {
-            System.out.printf("Received packet size histogram%n%n");
-            packetSizeHistogram.outputPercentileDistribution(System.out, 1d);
-
             System.out.printf("%n%nTransmit latency histogram%n%n");
             latencyHistogram.outputPercentileDistribution(System.out, 1d);
         }
