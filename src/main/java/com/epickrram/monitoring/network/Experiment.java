@@ -21,15 +21,13 @@ public final class Experiment
     public Experiment(
             final LongUnaryOperator sendingDelayCalculator,
             final LongConsumer transmitLatencyHandler,
-            final SocketAddress address,
-            final TimeUnit experimentRuntimeUnit,
-            final long experimentRuntimeDuration)
+            final ExperimentConfig config)
     {
         this.sendingDelayCalculator = sendingDelayCalculator;
         this.transmitLatencyHandler = transmitLatencyHandler;
-        this.address = address;
-        this.experimentRuntimeUnit = experimentRuntimeUnit;
-        this.experimentRuntimeDuration = experimentRuntimeDuration;
+        this.address = config.getAddress();
+        this.experimentRuntimeUnit = config.getExperimentRuntimeUnit();
+        this.experimentRuntimeDuration = config.getExperimentRuntimeDuration();
     }
 
     void execute()
@@ -40,6 +38,7 @@ public final class Experiment
         final UnicastSender sender = new UnicastSender(address, sendingDelayCalculator, messageFactory::prepare);
         final KernelBufferDepthMonitor bufferDepthMonitor = new KernelBufferDepthMonitor(address);
         final SoftIrqHandlerTimeSqueezeMonitor timeSqueezeMonitor = new SoftIrqHandlerTimeSqueezeMonitor();
+        final NetstatUdpStatsMonitor netstatUdpStatsMonitor = new NetstatUdpStatsMonitor();
 
         executorService.submit(receiver::receiveLoop);
         executorService.submit(sender::sendLoop);
@@ -47,6 +46,7 @@ public final class Experiment
         executorService.scheduleAtFixedRate(() -> {
             bufferDepthMonitor.report();
             timeSqueezeMonitor.report();
+            netstatUdpStatsMonitor.report();
         }, 1L, 1L, SECONDS);
 
 
