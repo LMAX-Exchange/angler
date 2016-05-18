@@ -78,6 +78,26 @@ public class UdpSocketMonitorTest
         assertEntry(recordedEntries.get(1), "192.168.122.1", 53, 166, 2, 15292);
     }
 
+    @Test
+    public void shouldNotNotifyHandlerOfChangeWhenSocketIsNoLongerMonitored() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
+        monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+        recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
+
+        writeDataFile("proc_net_udp_updated_sample.txt");
+
+        monitor.endMonitoringOf(getSocketAddress("192.168.122.1", 53));
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
+        assertThat(recordedEntries.size(), is(1));
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
+    }
+
     private void writeDataFile(final String resourceName) throws IOException, URISyntaxException
     {
         copy(Paths.get(currentThread().getContextClassLoader().getResource(resourceName).toURI()),
