@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class UdpSocketMonitor
 {
     private static final double AGRONA_DEFAULT_LOAD_FACTOR = 0.67;
+
     private final Long2ObjectHashMap<UdpBufferStats> monitoredSocketInstances = new Long2ObjectHashMap<>();
     private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets = new AtomicReference<>(new Long2ObjectHashMap<>());
     private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
