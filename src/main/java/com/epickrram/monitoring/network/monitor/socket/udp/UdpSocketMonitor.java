@@ -53,7 +53,7 @@ public final class UdpSocketMonitor
 
             if(fileSize > buffer.capacity())
             {
-                buffer = ByteBuffer.allocateDirect(buffer.capacity() * 2);
+                buffer = ByteBuffer.allocateDirect((int) Math.max(buffer.capacity() * 2, fileSize));
             }
 
             buffer.clear();

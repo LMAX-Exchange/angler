@@ -2,11 +2,26 @@ package com.epickrram.monitoring.network.monitor.util;
 
 import java.nio.ByteBuffer;
 
-public final class HexToLongDecoder
+public enum HexToLongDecoder
 {
-    private HexToLongDecoder() {}
+    LOWER_CASE(false),
+    UPPER_CASE(true);
 
-    public static long decode(final ByteBuffer src, final int startPosition, final int endPosition)
+    private static final byte ASCII_ZERO = (byte) '0';
+    private static final byte ASCII_NINE = (byte) '9';
+    private static final byte ASCII_A_UPPERCASE = (byte) 'A';
+    private static final byte ASCII_A_LOWERCASE = (byte) 'a';
+    private static final byte ASCII_F_UPPERCASE = (byte) 'F';
+    private static final byte ASCII_F_LOWERCASE = (byte) 'f';
+
+    private final boolean isUpperCase;
+
+    HexToLongDecoder(final boolean isUpperCase)
+    {
+        this.isUpperCase = isUpperCase;
+    }
+
+    public long decode(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         final int length = endPosition - startPosition;
         if(length > 8)
@@ -26,13 +41,13 @@ public final class HexToLongDecoder
         int shift = (length - 2) << 2;
         for(int offset = 0; offset < length; offset += 2)
         {
-            decodedValue |= hexValueAtOffset(src, startPosition + offset) << shift;
+            decodedValue |= Integer.toUnsignedLong(hexValueAtOffset(src, startPosition + offset) << shift);
             shift -= 8;
         }
         return decodedValue;
     }
 
-    private static int hexValueAtOffset(final ByteBuffer src, final int offset)
+    private int hexValueAtOffset(final ByteBuffer src, final int offset)
     {
         int value = getDecimalValueOfHexDigit(src, offset);
 
@@ -41,17 +56,21 @@ public final class HexToLongDecoder
         return value | getDecimalValueOfHexDigit(src, offset + 1);
     }
 
-    private static int getDecimalValueOfHexDigit(final ByteBuffer src, final int offset)
+    private int getDecimalValueOfHexDigit(final ByteBuffer src, final int offset)
     {
         final byte first = src.get(offset);
         int value;
-        if(first >= '0' && first <= '9')
+        if(first >= ASCII_ZERO && first <= ASCII_NINE)
         {
-            value = first - '0';
+            value = (first - ASCII_ZERO);
         }
-        else if(first >= 'A' && first <= 'F')
+        else if(isUpperCase && (first >= ASCII_A_UPPERCASE && first <= ASCII_F_UPPERCASE))
         {
-            value = first - 'A' + 10;
+            value = (first - ASCII_A_UPPERCASE + 10);
+        }
+        else if(!isUpperCase && (first >= ASCII_A_LOWERCASE && first <= ASCII_F_LOWERCASE))
+        {
+            value = (first - ASCII_A_LOWERCASE + 10);
         }
         else
         {

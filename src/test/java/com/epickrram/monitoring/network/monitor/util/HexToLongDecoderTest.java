@@ -2,9 +2,7 @@ package com.epickrram.monitoring.network.monitor.util;
 
 import org.junit.Test;
 
-import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.is;
@@ -16,6 +14,12 @@ public class HexToLongDecoderTest
     public void shouldDecodeSimpleNumber() throws Exception
     {
         assertValueDecoded("2D1E0A0A", encodeIpAddress(45, 30, 10, 10));
+    }
+
+    @Test
+    public void shouldDecodeNumberLargerThanMaxInt() throws Exception
+    {
+        assertValueDecoded("BDB8085F", 3182954591L);
     }
 
     @Test
@@ -32,7 +36,7 @@ public class HexToLongDecoderTest
     private static void assertValueDecoded(final String hexEncodedValue, final long expectedDecodedValue)
     {
         final ByteBuffer buffer = prepare(hexEncodedValue);
-        final long value = HexToLongDecoder.decode(buffer, buffer.position(), buffer.limit());
+        final long value = HexToLongDecoder.UPPER_CASE.decode(buffer, buffer.position(), buffer.limit());
 
         assertThat(value, is(expectedDecodedValue));
     }

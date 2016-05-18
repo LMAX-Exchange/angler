@@ -39,15 +39,15 @@ public final class ColumnHandler implements TokenHandler
                 case 1:
                     // do local address
                     //00000000:4E50
-                    final long socketIpv4Address = HexToLongDecoder.decode(src, startPosition, startPosition + 8);
-                    final long socketPortNumber = HexToLongDecoder.decode(src, startPosition + 9, endPosition);
+                    final long socketIpv4Address = HexToLongDecoder.UPPER_CASE.decode(src, startPosition, startPosition + 8);
+                    final long socketPortNumber = HexToLongDecoder.UPPER_CASE.decode(src, startPosition + 9, endPosition);
                     entry.setSocketIdentifier(fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
                     break;
                 case 4:
                     // do rx queue
                     // hex
                     //00000000:00000000
-                    final long receiveQueueDepth = HexToLongDecoder.decode(src, startPosition + 9, endPosition);
+                    final long receiveQueueDepth = HexToLongDecoder.UPPER_CASE.decode(src, startPosition + 9, endPosition);
                     entry.setReceiveQueueDepth(receiveQueueDepth);
                     break;
                 case 9:
