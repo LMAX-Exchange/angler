@@ -9,11 +9,26 @@ public final class HexToLongDecoder
     public static long decode(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         final int length = endPosition - startPosition;
+        if(length > 8)
+        {
+            throw new IllegalArgumentException("Cannot decode hex long value. Specified value is too long.");
+        }
+        if(length == 0)
+        {
+            throw new IllegalArgumentException("Cannot decode zero-length hex value.");
+        }
+        if(Integer.bitCount(length) != 1)
+        {
+            throw new IllegalArgumentException("Can only decode hex values that are a multiple of 2 in length.");
+        }
+
         long decodedValue = 0L;
-        decodedValue |= hexValueAtOffset(src, startPosition) << 24;
-        decodedValue |= hexValueAtOffset(src, startPosition + 2) << 16;
-        decodedValue |= hexValueAtOffset(src, startPosition + 4) << 8;
-        decodedValue |= hexValueAtOffset(src, startPosition + 6);
+        int shift = (length - 2) << 2;
+        for(int offset = 0; offset < length; offset += 2)
+        {
+            decodedValue |= hexValueAtOffset(src, startPosition + offset) << shift;
+            shift -= 8;
+        }
         return decodedValue;
     }
 

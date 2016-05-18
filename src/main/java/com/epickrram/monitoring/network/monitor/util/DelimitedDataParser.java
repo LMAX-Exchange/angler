@@ -20,7 +20,6 @@ public final class DelimitedDataParser implements TokenHandler
 
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {
-        System.out.println(this + "\n" + BufferToString.bufferToString(src, startPosition, endPosition));
         int currentPosition = startPosition;
 
         while(currentPosition < src.capacity() && src.get(currentPosition) == delimiter)

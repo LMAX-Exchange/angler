@@ -8,6 +8,7 @@ public interface UdpSocketStatisticsHandler
     void onStatisticsUpdated(
             final InetSocketAddress socketAddress,
             final long socketIdentifier,
+            final long inode,
             final long receiveQueueDepth,
             final long drops);
 }

@@ -1,11 +1,13 @@
 package com.epickrram.monitoring.network.monitor.socket.udp;
 
-import com.epickrram.monitoring.network.monitor.util.BufferToString;
+import com.epickrram.monitoring.network.monitor.util.AsciiBytesToLongDecoder;
+import com.epickrram.monitoring.network.monitor.util.HexToLongDecoder;
 import com.epickrram.monitoring.network.monitor.util.TokenHandler;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
+import static com.epickrram.monitoring.network.monitor.socket.SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class ColumnHandler implements TokenHandler
@@ -24,8 +26,6 @@ public final class ColumnHandler implements TokenHandler
     @Override
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {
-        final String tokenValue = BufferToString.bufferToString(src, startPosition, endPosition);
-//        System.out.println("Current column: " + currentColumn + ", value: " + tokenValue);
         if(src.getShort(startPosition) == HEADER_ROW_FIRST_COLUMN_VALUE)
         {
             // header row
@@ -38,18 +38,28 @@ public final class ColumnHandler implements TokenHandler
             {
                 case 1:
                     // do local address
-                    System.out.println("local address: " + tokenValue);
+                    //00000000:4E50
+                    final long socketIpv4Address = HexToLongDecoder.decode(src, startPosition, startPosition + 8);
+                    final long socketPortNumber = HexToLongDecoder.decode(src, startPosition + 9, endPosition);
+                    entry.setSocketIdentifier(fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
                     break;
                 case 4:
                     // do rx queue
-                    System.out.println("rx queue: " + tokenValue);
+                    // hex
+                    //00000000:00000000
+                    final long receiveQueueDepth = HexToLongDecoder.decode(src, startPosition + 9, endPosition);
+                    entry.setReceiveQueueDepth(receiveQueueDepth);
                     break;
                 case 9:
                     // do inode
+                    final long inode = AsciiBytesToLongDecoder.decode(src, startPosition, endPosition);
+                    entry.setInode(inode);
                     break;
                 case 12:
                     // do drops
-                    System.out.println("drops: " + tokenValue);
+                    final long drops = AsciiBytesToLongDecoder.decode(src, startPosition, endPosition);
+                    entry.setDrops(drops);
+                    //0
                     break;
                 default:
                     break;
@@ -62,7 +72,6 @@ public final class ColumnHandler implements TokenHandler
     @Override
     public void complete()
     {
-        System.out.println("--complete--");
         if(!headerRow)
         {
             bufferStatsEntryConsumer.accept(entry);
@@ -75,22 +84,6 @@ public final class ColumnHandler implements TokenHandler
     @Override
     public void reset()
     {
-        System.out.println("--reset--");
         currentColumn = 0;
-    }
-
-    public long getSocketIdentifier()
-    {
-        return 0L;
-    }
-
-    public long getDrops()
-    {
-        return 0L;
-    }
-
-    public long getReceiveQueueDepth()
-    {
-        return 0L;
     }
 }

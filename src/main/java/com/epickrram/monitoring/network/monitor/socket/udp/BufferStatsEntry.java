@@ -5,6 +5,7 @@ final class BufferStatsEntry
     private long socketIdentifier;
     private long receiveQueueDepth;
     private long drops;
+    private long inode;
 
     public long getSocketIdentifier()
     {
@@ -14,6 +15,11 @@ final class BufferStatsEntry
     public void setSocketIdentifier(final long socketIdentifier)
     {
         this.socketIdentifier = socketIdentifier;
+    }
+
+    public void setInode(final long inode)
+    {
+        this.inode = inode;
     }
 
     public long getReceiveQueueDepth()
@@ -36,10 +42,16 @@ final class BufferStatsEntry
         this.drops = drops;
     }
 
+    public long getInode()
+    {
+        return inode;
+    }
+
     public void reset()
     {
         socketIdentifier = 0L;
         receiveQueueDepth = 0L;
         drops = 0L;
+        inode = 0L;
     }
 }

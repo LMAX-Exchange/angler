@@ -1,10 +1,10 @@
 package com.epickrram.monitoring.network.monitor.socket.udp;
 
+import com.epickrram.monitoring.network.monitor.socket.SocketIdentifier;
 import com.epickrram.monitoring.network.monitor.util.DelimitedDataParser;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -15,9 +15,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static java.lang.Byte.toUnsignedInt;
-import static java.lang.Integer.toHexString;
 
 public final class UdpSocketMonitor
 {
@@ -34,6 +31,8 @@ public final class UdpSocketMonitor
 
     private ByteBuffer buffer = ByteBuffer.allocateDirect(65536);
     private FileChannel fileChannel;
+    private UdpSocketStatisticsHandler statisticsHandler;
+    private Map<Long, UdpBufferStats> monitoredSocketsSnapshot;
 
     public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
@@ -43,11 +42,19 @@ public final class UdpSocketMonitor
 
     private void handleEntry(final BufferStatsEntry entry)
     {
-
+        // TODO get inet address from map
+        final UdpBufferStats lastUpdate = monitoredSocketsSnapshot.get(entry.getSocketIdentifier());
+        if(lastUpdate != null)
+        {
+            statisticsHandler.onStatisticsUpdated(lastUpdate.socketAddress, entry.getSocketIdentifier(),
+                    entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
+        }
     }
 
     public void poll(final UdpSocketStatisticsHandler handler)
     {
+        this.statisticsHandler = handler;
+        this.monitoredSocketsSnapshot = mapReference.get();
         try
         {
             if(fileChannel == null)
@@ -68,27 +75,14 @@ public final class UdpSocketMonitor
 
             lineParser.reset();
             lineParser.handleToken(buffer, buffer.position(), buffer.limit());
-
-            final Map<Long, UdpBufferStats> currentSockets = mapReference.get();
-//            String line;
-//            while((line = reader.readLine()) != null)
-//            {
-//                if(statsEntry.handleLine(line) && currentSockets.containsKey(statsEntry.getSocketIdentifier()))
-//                {
-//                    final UdpBufferStats existing = currentSockets.get(statsEntry.getSocketIdentifier());
-//                    final UdpBufferStats collected = statsEntry.getUdpBufferStats();
-//                    existing.update(collected.receiveQueueDepth, collected.drops);
-//                    handler.onStatisticsUpdated(
-//                            existing.socketAddress,
-//                            statsEntry.getSocketIdentifier(),
-//                            existing.receiveQueueDepth,
-//                            existing.drops);
-//                }
-//            }
         }
         catch(IOException e)
         {
             throw new UncheckedIOException(e);
+        }
+        finally
+        {
+            this.statisticsHandler = null;
         }
     }
 
@@ -96,7 +90,7 @@ public final class UdpSocketMonitor
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
         final Map<Long, UdpBufferStats> currentSockets = mapReference.get();
-        final long socketIdentifier = toIdentifier(socketAddress);
+        final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);
 
         if(currentSockets.containsKey(socketIdentifier))
         {
@@ -118,7 +112,7 @@ public final class UdpSocketMonitor
     public void endMonitoringOf(final InetSocketAddress socketAddress)
     {
         final Map<Long, UdpBufferStats> currentSockets = mapReference.get();
-        final long socketIdentifier = toIdentifier(socketAddress);
+        final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);
 
         if(!currentSockets.containsKey(socketIdentifier))
         {
@@ -135,32 +129,6 @@ public final class UdpSocketMonitor
             }
         }
         lifecycleListener.socketMonitoringStopped(socketAddress);
-    }
-
-    private long toIdentifier(final InetSocketAddress socketAddress)
-    {
-        validateAddressType(socketAddress);
-        final int ipAddressOctets = socketAddress.getAddress().hashCode();
-        final long port = socketAddress.getPort();
-        return port << 32 | ipAddressOctets;
-    }
-
-    private static void validateAddressType(final InetSocketAddress socketAddress)
-    {
-        if(!(socketAddress.getAddress() instanceof Inet4Address))
-        {
-            throw new IllegalArgumentException("Due to the nature of some awful hacks, " +
-                    "I only work with Inet4Address-based sockets");
-        }
-    }
-
-    private void parse(final String line, final UdpBufferStats udpBufferStats)
-    {
-        final String[] tokens = line.trim().split("\\s+");
-        final String[] txRxQueue = tokens[4].split(":");
-        final long receiveQueueDepth = Long.parseLong(txRxQueue[1], 16);
-        final long drops = Long.parseLong(tokens[12]);
-        udpBufferStats.update(receiveQueueDepth, drops);
     }
 
     private static final class UdpBufferStats
@@ -183,28 +151,5 @@ public final class UdpSocketMonitor
             this.receiveQueueDepth = receiveQueueDepth;
             this.drops = drops;
         }
-    }
-
-    private static String calculateBufferIdentifier(final byte[] addressOctets, final int port)
-    {
-        return
-                leftPadTo(2, toHexString(toUnsignedInt(addressOctets[3])).toUpperCase()) +
-                        leftPadTo(2, toHexString(toUnsignedInt(addressOctets[2])).toUpperCase()) +
-                        leftPadTo(2, toHexString(toUnsignedInt(addressOctets[1])).toUpperCase()) +
-                        leftPadTo(2, toHexString(toUnsignedInt(addressOctets[0])).toUpperCase()) +
-                        ":" +
-                        leftPadTo(4, toHexString(port).toUpperCase());
-
-    }
-
-    private static String leftPadTo(final int totalLength, final String source)
-    {
-        String result = source;
-        for(int i = 0; i < totalLength - source.length(); i++)
-        {
-            result = "0" + result;
-        }
-
-        return result;
     }
 }
