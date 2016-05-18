@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class UdpSocketMonitor
@@ -22,7 +24,6 @@ public final class UdpSocketMonitor
 
     private final UdpSocketMonitoringLifecycleListener lifecycleListener;
     private final Path pathToProcNetUdp;
-    private final BufferStatsEntry statsEntry = new BufferStatsEntry();
     private final DelimitedDataParser columnParser = new DelimitedDataParser(new ColumnHandler(this::handleEntry), (byte)' ', true);
     private final DelimitedDataParser lineParser = new DelimitedDataParser(columnParser, (byte)'\n', true);
 
@@ -30,6 +31,7 @@ public final class UdpSocketMonitor
     private FileChannel fileChannel;
     private UdpSocketStatisticsHandler statisticsHandler;
     private Map<Long, UdpBufferStats> monitoredSocketsSnapshot;
+    private long updateCount = 0;
 
     public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
@@ -43,6 +45,7 @@ public final class UdpSocketMonitor
         if(lastUpdate != null)
         {
             lastUpdate.updateFrom(entry);
+            lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
             {
                 statisticsHandler.onStatisticsUpdated(lastUpdate.socketAddress, entry.getSocketIdentifier(),
@@ -83,8 +86,11 @@ public final class UdpSocketMonitor
         {
             this.statisticsHandler = null;
         }
-    }
 
+        purgeStaleEntries();
+
+        updateCount++;
+    }
 
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
@@ -97,10 +103,11 @@ public final class UdpSocketMonitor
         }
         while(true)
         {
+            final Map<Long, UdpBufferStats> snapshot = mapReference.get();
             final Map<Long, UdpBufferStats> updatedSockets = new HashMap<>(currentSockets.size());
             updatedSockets.putAll(currentSockets);
             updatedSockets.put(socketIdentifier, new UdpBufferStats(socketAddress));
-            if(mapReference.compareAndSet(currentSockets, updatedSockets))
+            if(mapReference.compareAndSet(snapshot, updatedSockets))
             {
                 break;
             }
@@ -119,15 +126,49 @@ public final class UdpSocketMonitor
         }
         while(true)
         {
+            final Map<Long, UdpBufferStats> snapshot = mapReference.get();
             final Map<Long, UdpBufferStats> updatedSockets = new HashMap<>(currentSockets.size());
-            updatedSockets.putAll(currentSockets);
+            updatedSockets.putAll(snapshot);
             updatedSockets.remove(socketIdentifier);
-            if(mapReference.compareAndSet(currentSockets, updatedSockets))
+            if(mapReference.compareAndSet(snapshot, updatedSockets))
             {
                 break;
             }
         }
         lifecycleListener.socketMonitoringStopped(socketAddress);
+    }
+
+    private void purgeStaleEntries()
+    {
+        final Set<Long> keysForRemoval = new HashSet<>();
+        for(final Long key : monitoredSocketsSnapshot.keySet())
+        {
+            if(monitoredSocketsSnapshot.get(key).getUpdateCount() != updateCount)
+            {
+                keysForRemoval.add(key);
+            }
+        }
+
+        while(true)
+        {
+            final Set<InetSocketAddress> removedAddresses = new HashSet<>();
+            final Map<Long, UdpBufferStats> snapshot = mapReference.get();
+            final Map<Long, UdpBufferStats> updatedSockets = new HashMap<>(snapshot.size());
+            updatedSockets.putAll(snapshot);
+
+            for(final Long key : keysForRemoval)
+            {
+                removedAddresses.add(updatedSockets.remove(key).socketAddress);
+            }
+            if(mapReference.compareAndSet(snapshot, updatedSockets))
+            {
+                for(final InetSocketAddress removedAddress : removedAddresses)
+                {
+                    lifecycleListener.socketMonitoringStopped(removedAddress);
+                }
+                break;
+            }
+        }
     }
 
     private static final class UdpBufferStats
@@ -136,6 +177,7 @@ public final class UdpSocketMonitor
         private long drops = -1;
         private boolean changed;
         private InetSocketAddress socketAddress;
+        private long updateCount = -1;
 
         UdpBufferStats(final InetSocketAddress socketAddress)
         {
@@ -153,6 +195,16 @@ public final class UdpSocketMonitor
         boolean hasChanged()
         {
             return changed;
+        }
+
+        void updateCount(final long updateCount)
+        {
+            this.updateCount = updateCount;
+        }
+
+        long getUpdateCount()
+        {
+            return updateCount;
         }
     }
 }

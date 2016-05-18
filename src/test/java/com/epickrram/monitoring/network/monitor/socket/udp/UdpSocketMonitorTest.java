@@ -26,6 +26,8 @@ public class UdpSocketMonitorTest
 {
     private final RecordingUdpSocketStatisticsHandler recordingUdpSocketStatisticsHandler =
             new RecordingUdpSocketStatisticsHandler();
+    private final RecordingUdpSocketMonitoringLifecycleListener lifecycleListener =
+            new RecordingUdpSocketMonitoringLifecycleListener();
     private Path inputPath;
     private UdpSocketMonitor monitor;
 
@@ -34,7 +36,7 @@ public class UdpSocketMonitorTest
     {
         inputPath = Files.createTempFile("proc-net-udp", "txt");
         writeDataFile("proc_net_udp_sample.txt");
-        monitor = new UdpSocketMonitor(new RecordingUdpSocketMonitoringLifecycleListener(), inputPath);
+        monitor = new UdpSocketMonitor(lifecycleListener, inputPath);
     }
 
     @After
@@ -98,6 +100,39 @@ public class UdpSocketMonitorTest
         assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
     }
 
+    @Test
+    public void shouldNotifyLifecycleListener() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
+
+        monitor.endMonitoringOf(getSocketAddress("0.0.0.0", 56150));
+
+        final List<InetSocketAddress> monitoringStartedList = lifecycleListener.getMonitoringStartedList();
+        assertThat(monitoringStartedList.size(), is(2));
+        assertThat(monitoringStartedList.get(0), is(getSocketAddress("0.0.0.0", 20048)));
+        assertThat(monitoringStartedList.get(1), is(getSocketAddress("0.0.0.0", 56150)));
+
+        final List<InetSocketAddress> monitoringStoppedList = lifecycleListener.getMonitoringStoppedList();
+        assertThat(monitoringStoppedList.size(), is(1));
+        assertThat(monitoringStoppedList.get(0), is(getSocketAddress("0.0.0.0", 56150)));
+    }
+
+    @Test
+    public void shouldNotifyLifecycleListenerWhenMonitoredSocketBecomesUnavailable() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        writeDataFile("proc_net_udp_socket_removed_sample.txt");
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<InetSocketAddress> monitoringStoppedList = lifecycleListener.getMonitoringStoppedList();
+        assertThat(monitoringStoppedList.size(), is(1));
+        assertThat(monitoringStoppedList.get(0), is(getSocketAddress("0.0.0.0", 20048)));
+    }
+
     private void writeDataFile(final String resourceName) throws IOException, URISyntaxException
     {
         copy(Paths.get(currentThread().getContextClassLoader().getResource(resourceName).toURI()),
@@ -127,16 +162,29 @@ public class UdpSocketMonitorTest
 
     private static class RecordingUdpSocketMonitoringLifecycleListener implements UdpSocketMonitoringLifecycleListener
     {
+        private final List<InetSocketAddress> monitoringStartedList = new ArrayList<>();
+        private final List<InetSocketAddress> monitoringStoppedList = new ArrayList<>();
+
         @Override
         public void socketMonitoringStarted(final InetSocketAddress socketAddress)
         {
-
+            monitoringStartedList.add(socketAddress);
         }
 
         @Override
         public void socketMonitoringStopped(final InetSocketAddress socketAddress)
         {
+            monitoringStoppedList.add(socketAddress);
+        }
 
+        List<InetSocketAddress> getMonitoringStartedList()
+        {
+            return monitoringStartedList;
+        }
+
+        List<InetSocketAddress> getMonitoringStoppedList()
+        {
+            return monitoringStoppedList;
         }
     }
 
