@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor;
+package com.epickrram.monitoring.network;
 
 import java.util.function.LongSupplier;
 

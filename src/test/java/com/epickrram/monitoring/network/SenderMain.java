@@ -1,7 +1,5 @@
 package com.epickrram.monitoring.network;
 
-import com.epickrram.monitoring.network.monitor.SendReceiveCountMonitor;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

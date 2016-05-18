@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor;
+package com.epickrram.monitoring.network.monitor.system;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

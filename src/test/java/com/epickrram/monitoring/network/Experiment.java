@@ -1,9 +1,10 @@
 package com.epickrram.monitoring.network;
 
 import com.epickrram.monitoring.network.monitor.KernelBufferDepthMonitor;
-import com.epickrram.monitoring.network.monitor.NetstatUdpStatsMonitor;
-import com.epickrram.monitoring.network.monitor.SendReceiveCountMonitor;
-import com.epickrram.monitoring.network.monitor.SoftIrqHandlerTimeSqueezeMonitor;
+import com.epickrram.monitoring.network.monitor.system.NetstatUdpStatsMonitor;
+import com.epickrram.monitoring.network.monitor.system.SoftIrqHandlerTimeSqueezeMonitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
 import java.util.concurrent.Executors;
@@ -13,7 +14,6 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.LongConsumer;
 import java.util.function.LongUnaryOperator;
 
-import static com.epickrram.monitoring.network.AffinityWrapper.runOnThread;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class Experiment
@@ -50,16 +50,16 @@ public final class Experiment
         final SendReceiveCountMonitor sendReceiveCountMonitor =
                 new SendReceiveCountMonitor(shouldRunSender ? sender::getSentCount : () -> -1, receiver::getReceivedCount);
 
-        executorService.submit(runOnThread(29, receiver::receiveLoop));
+        executorService.submit(logExit("receiver", receiver::receiveLoop));
 
         System.out.printf("Receiver SO_RCVBUF set to %d%n%n", receiver.getConfiguredReceiveBufferSize());
 
         if(shouldRunSender)
         {
-            executorService.submit(runOnThread(31, sender::sendLoop));
+            executorService.submit(logExit("sender", sender::sendLoop));
         }
 
-        executorService.scheduleAtFixedRate(() -> {
+        executorService.scheduleAtFixedRate(logExit("monitor", () -> {
             try
             {
                 sendReceiveCountMonitor.report();
@@ -73,7 +73,7 @@ public final class Experiment
             }
             System.out.println();
 
-        }, 1L, 1L, SECONDS);
+        }), 1L, 1L, SECONDS);
 
 
         LockSupport.parkNanos(experimentRuntimeUnit.toNanos(experimentRuntimeDuration));
@@ -89,6 +89,42 @@ public final class Experiment
         catch (InterruptedException e)
         {
             System.err.println("Interrupted while waiting for threads to exit.");
+        }
+    }
+
+    private static Runnable logExit(final String taskName, final Runnable delegate)
+    {
+        return new ExitLoggingRunnable(delegate, taskName);
+    }
+
+    private static final class ExitLoggingRunnable implements Runnable
+    {
+        private static final Logger LOGGER = LoggerFactory.getLogger(ExitLoggingRunnable.class);
+
+        private final Runnable delegate;
+        private final String name;
+
+        public ExitLoggingRunnable(final Runnable delegate, final String name)
+        {
+            this.delegate = delegate;
+            this.name = name;
+        }
+
+        @Override
+        public void run()
+        {
+            try
+            {
+                delegate.run();
+            }
+            catch(final Throwable t)
+            {
+                LOGGER.error("Task {} exited with exception: {}", name, t.getMessage());
+            }
+            finally
+            {
+                LOGGER.info("Task {} exited normally", name);
+            }
         }
     }
 }
