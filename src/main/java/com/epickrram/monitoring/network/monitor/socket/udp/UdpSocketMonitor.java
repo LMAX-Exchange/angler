@@ -10,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +17,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class UdpSocketMonitor
 {
-    private static final Path PROC_NET_UDP = Paths.get("/proc/net/udp");
-
     // TODO replace with Long2ObjectMap
     private final AtomicReference<Map<Long, UdpBufferStats>> mapReference = new AtomicReference<>(new HashMap<>());
 
@@ -42,7 +39,6 @@ public final class UdpSocketMonitor
 
     private void handleEntry(final BufferStatsEntry entry)
     {
-        // TODO get inet address from map
         final UdpBufferStats lastUpdate = monitoredSocketsSnapshot.get(entry.getSocketIdentifier());
         if(lastUpdate != null)
         {
