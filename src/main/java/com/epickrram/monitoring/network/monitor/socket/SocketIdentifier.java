@@ -21,9 +21,26 @@ public final class SocketIdentifier
         return port << 32 | Long.reverseBytes(decodedAddress) >>> 32;
     }
 
+    public static long fromLinuxKernelHexEncodedAddressAndPortAndInode(final long decodedAddress,
+                                                                       final long port,
+                                                                       final long inode)
+    {
+        return inode << 48 | port << 32 | Long.reverseBytes(decodedAddress) >>> 32;
+    }
+
+    public static long overlayInode(final long socketIdentifier, final long inode)
+    {
+        return  inode << 48 | socketIdentifier;
+    }
+
     public static int extractPortNumber(final long socketIdentifier)
     {
-        return (int) (socketIdentifier >> 32);
+        return (int) ((socketIdentifier >> 32) & 0xFFFF);
+    }
+
+    public static long extractInode(final long socketIdentifier)
+    {
+        return (socketIdentifier >> 48);
     }
 
     public static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException

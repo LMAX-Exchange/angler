@@ -106,7 +106,11 @@ public class UdpSocketMonitorTest
         monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
         monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
 
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
         monitor.endMonitoringOf(getSocketAddress("0.0.0.0", 56150));
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
 
         final List<InetSocketAddress> monitoringStartedList = lifecycleListener.getMonitoringStartedList();
         assertThat(monitoringStartedList.size(), is(2));
@@ -166,13 +170,13 @@ public class UdpSocketMonitorTest
         private final List<InetSocketAddress> monitoringStoppedList = new ArrayList<>();
 
         @Override
-        public void socketMonitoringStarted(final InetSocketAddress socketAddress)
+        public void socketMonitoringStarted(final InetSocketAddress socketAddress, final long inode)
         {
             monitoringStartedList.add(socketAddress);
         }
 
         @Override
-        public void socketMonitoringStopped(final InetSocketAddress socketAddress)
+        public void socketMonitoringStopped(final InetSocketAddress socketAddress, final long inode)
         {
             monitoringStoppedList.add(socketAddress);
         }

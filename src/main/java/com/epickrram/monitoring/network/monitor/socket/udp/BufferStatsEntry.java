@@ -1,5 +1,7 @@
 package com.epickrram.monitoring.network.monitor.socket.udp;
 
+import com.epickrram.monitoring.network.monitor.socket.SocketIdentifier;
+
 final class BufferStatsEntry
 {
     private long socketIdentifier;
@@ -10,6 +12,11 @@ final class BufferStatsEntry
     public long getSocketIdentifier()
     {
         return socketIdentifier;
+    }
+
+    public long getSocketInstanceIndentifier()
+    {
+        return SocketIdentifier.overlayInode(socketIdentifier, inode);
     }
 
     public void setSocketIdentifier(final long socketIdentifier)
