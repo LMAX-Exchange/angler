@@ -42,8 +42,12 @@ public final class UdpSocketMonitor
         final UdpBufferStats lastUpdate = monitoredSocketsSnapshot.get(entry.getSocketIdentifier());
         if(lastUpdate != null)
         {
-            statisticsHandler.onStatisticsUpdated(lastUpdate.socketAddress, entry.getSocketIdentifier(),
-                    entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
+            lastUpdate.updateFrom(entry);
+            if(lastUpdate.hasChanged())
+            {
+                statisticsHandler.onStatisticsUpdated(lastUpdate.socketAddress, entry.getSocketIdentifier(),
+                        entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
+            }
         }
     }
 
@@ -65,8 +69,7 @@ public final class UdpSocketMonitor
             }
 
             buffer.clear();
-            fileChannel.position(0);
-            fileChannel.read(buffer);
+            fileChannel.read(buffer, 0);
             buffer.flip();
 
             lineParser.reset();
@@ -96,7 +99,7 @@ public final class UdpSocketMonitor
         {
             final Map<Long, UdpBufferStats> updatedSockets = new HashMap<>(currentSockets.size());
             updatedSockets.putAll(currentSockets);
-            updatedSockets.put(socketIdentifier, new UdpBufferStats(0L, 0L, socketAddress));
+            updatedSockets.put(socketIdentifier, new UdpBufferStats(socketAddress));
             if(mapReference.compareAndSet(currentSockets, updatedSockets))
             {
                 break;
@@ -129,23 +132,27 @@ public final class UdpSocketMonitor
 
     private static final class UdpBufferStats
     {
-        private long receiveQueueDepth;
-        private long drops;
+        private long receiveQueueDepth = -1;
+        private long drops = -1;
         private boolean changed;
         private InetSocketAddress socketAddress;
 
-        public UdpBufferStats(final long receiveQueueDepth, final long drops, final InetSocketAddress socketAddress)
+        UdpBufferStats(final InetSocketAddress socketAddress)
         {
-            this.receiveQueueDepth = receiveQueueDepth;
-            this.drops = drops;
             this.socketAddress = socketAddress;
         }
 
-        void update(final long receiveQueueDepth, final long drops)
+        void updateFrom(final BufferStatsEntry entry)
         {
-            changed = (this.receiveQueueDepth != receiveQueueDepth) || (this.drops != drops);
-            this.receiveQueueDepth = receiveQueueDepth;
-            this.drops = drops;
+            changed = (this.receiveQueueDepth != entry.getReceiveQueueDepth()) ||
+                    (this.drops != entry.getDrops());
+            this.receiveQueueDepth = entry.getReceiveQueueDepth();
+            this.drops = entry.getDrops();
+        }
+
+        boolean hasChanged()
+        {
+            return changed;
         }
     }
 }

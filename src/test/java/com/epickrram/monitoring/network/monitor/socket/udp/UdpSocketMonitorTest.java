@@ -5,17 +5,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.Thread.currentThread;
 import static java.nio.file.Files.copy;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -30,7 +33,7 @@ public class UdpSocketMonitorTest
     public void before() throws Exception
     {
         inputPath = Files.createTempFile("proc-net-udp", "txt");
-        copy(currentThread().getContextClassLoader().getResourceAsStream("proc_net_udp_sample.txt"), inputPath, REPLACE_EXISTING);
+        writeDataFile("proc_net_udp_sample.txt");
         monitor = new UdpSocketMonitor(new RecordingUdpSocketMonitoringLifecycleListener(), inputPath);
     }
 
@@ -54,6 +57,31 @@ public class UdpSocketMonitorTest
         assertEntry(recordedEntries.get(0), "0.0.0.0", 20048, 0, 0, 21682);
         assertEntry(recordedEntries.get(1), "0.0.0.0", 56150, 0, 4, 13597);
         assertEntry(recordedEntries.get(2), "192.168.122.1", 53, 166, 0, 15292);
+    }
+
+    @Test
+    public void shouldNotNotifyHandlerOfUnchangedEntries() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
+        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
+        monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+        recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
+
+        writeDataFile("proc_net_udp_updated_sample.txt");
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
+        assertThat(recordedEntries.size(), is(2));
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
+        assertEntry(recordedEntries.get(1), "192.168.122.1", 53, 166, 2, 15292);
+    }
+
+    private void writeDataFile(final String resourceName) throws IOException, URISyntaxException
+    {
+        copy(Paths.get(currentThread().getContextClassLoader().getResource(resourceName).toURI()),
+                new FileOutputStream(inputPath.toFile(), false));
     }
 
     private static void assertEntry(final MonitoredEntry monitoredEntry,
