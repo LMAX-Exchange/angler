@@ -1,7 +1,5 @@
 package com.epickrram.monitoring.network.monitor.system.softnet;
 
-import com.epickrram.monitoring.network.monitor.system.softnet.SoftIrqHandlerTimeSqueezeMonitor;
-import com.epickrram.monitoring.network.monitor.system.softnet.SoftnetStatsHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
