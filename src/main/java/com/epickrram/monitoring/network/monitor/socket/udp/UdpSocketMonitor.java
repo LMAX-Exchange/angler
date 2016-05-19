@@ -2,18 +2,14 @@ package com.epickrram.monitoring.network.monitor.socket.udp;
 
 import com.epickrram.monitoring.network.monitor.socket.SocketIdentifier;
 import com.epickrram.monitoring.network.monitor.util.DelimitedDataParser;
+import com.epickrram.monitoring.network.monitor.util.FileLoader;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class UdpSocketMonitor
@@ -25,19 +21,17 @@ public final class UdpSocketMonitor
     private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
 
     private final UdpSocketMonitoringLifecycleListener lifecycleListener;
-    private final Path pathToProcNetUdp;
     private final DelimitedDataParser columnParser = new DelimitedDataParser(new UdpColumnHandler(this::handleEntry), (byte)' ', true);
     private final DelimitedDataParser lineParser = new DelimitedDataParser(columnParser, (byte)'\n', true);
+    private final FileLoader fileLoader;
 
-    private ByteBuffer buffer = ByteBuffer.allocateDirect(65536);
-    private FileChannel fileChannel;
     private UdpSocketStatisticsHandler statisticsHandler;
     private long updateCount = 0;
 
     public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
         this.lifecycleListener = lifecycleListener;
-        this.pathToProcNetUdp = pathToProcNetUdp;
+        fileLoader = new FileLoader(65536, pathToProcNetUdp);
     }
 
     public void poll(final UdpSocketStatisticsHandler handler)
@@ -45,27 +39,11 @@ public final class UdpSocketMonitor
         this.statisticsHandler = handler;
         try
         {
-            if(fileChannel == null)
-            {
-                fileChannel = FileChannel.open(pathToProcNetUdp, StandardOpenOption.READ);
-            }
-            final long fileSize = Files.size(pathToProcNetUdp);
-
-            if(fileSize > buffer.capacity())
-            {
-                buffer = ByteBuffer.allocateDirect((int) Math.max(buffer.capacity() * 2, fileSize));
-            }
-
-            buffer.clear();
-            fileChannel.read(buffer, 0);
-            buffer.flip();
+            fileLoader.load();
+            final ByteBuffer buffer = fileLoader.getBuffer();
 
             lineParser.reset();
             lineParser.handleToken(buffer, buffer.position(), buffer.limit());
-        }
-        catch(IOException e)
-        {
-            throw new UncheckedIOException(e);
         }
         finally
         {
