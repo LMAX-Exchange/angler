@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor.system;
+package com.epickrram.monitoring.network.monitor.system.softnet;
 
 import com.epickrram.monitoring.network.monitor.util.DelimitedDataParser;
 import com.epickrram.monitoring.network.monitor.util.FileLoader;

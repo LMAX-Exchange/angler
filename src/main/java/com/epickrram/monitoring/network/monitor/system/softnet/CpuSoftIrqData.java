@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor.system;
+package com.epickrram.monitoring.network.monitor.system.softnet;
 
 final class CpuSoftIrqData
 {
