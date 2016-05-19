@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import static com.epickrram.monitoring.network.monitor.socket.SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class ColumnHandler implements TokenHandler
+public final class UdpColumnHandler implements TokenHandler
 {
     private static final short HEADER_ROW_FIRST_COLUMN_VALUE = ByteBuffer.wrap("sl".getBytes(UTF_8)).getShort();
     private final Consumer<BufferStatsEntry> bufferStatsEntryConsumer;
@@ -18,7 +18,7 @@ public final class ColumnHandler implements TokenHandler
     private int currentColumn = 0;
     private boolean headerRow;
 
-    public ColumnHandler(final Consumer<BufferStatsEntry> bufferStatsEntryConsumer)
+    public UdpColumnHandler(final Consumer<BufferStatsEntry> bufferStatsEntryConsumer)
     {
         this.bufferStatsEntryConsumer = bufferStatsEntryConsumer;
     }

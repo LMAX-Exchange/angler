@@ -26,7 +26,7 @@ public final class UdpSocketMonitor
 
     private final UdpSocketMonitoringLifecycleListener lifecycleListener;
     private final Path pathToProcNetUdp;
-    private final DelimitedDataParser columnParser = new DelimitedDataParser(new ColumnHandler(this::handleEntry), (byte)' ', true);
+    private final DelimitedDataParser columnParser = new DelimitedDataParser(new UdpColumnHandler(this::handleEntry), (byte)' ', true);
     private final DelimitedDataParser lineParser = new DelimitedDataParser(columnParser, (byte)'\n', true);
 
     private ByteBuffer buffer = ByteBuffer.allocateDirect(65536);
