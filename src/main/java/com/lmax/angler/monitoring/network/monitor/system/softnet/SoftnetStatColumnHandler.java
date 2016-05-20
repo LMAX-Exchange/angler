@@ -7,7 +7,10 @@ import java.util.function.Consumer;
 
 import static com.lmax.angler.monitoring.network.monitor.util.HexToLongDecoder.LOWER_CASE;
 
-public final class SoftnetStatColumnHandler implements TokenHandler
+/**
+ * TokenHandler for data in /proc/net/softnet_stat.
+ */
+final class SoftnetStatColumnHandler implements TokenHandler
 {
     private final Consumer<CpuSoftIrqData> cpuSoftIrqDataConsumer;
     private final CpuSoftIrqData entry = new CpuSoftIrqData(-1);

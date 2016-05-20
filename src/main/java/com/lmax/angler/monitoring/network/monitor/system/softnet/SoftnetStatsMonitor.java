@@ -6,10 +6,15 @@ import org.agrona.collections.Int2ObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static java.lang.Runtime.getRuntime;
 
-public final class SoftIrqHandlerTimeSqueezeMonitor
+/**
+ * Monitor for reporting changes in /proc/net/softnet_stat, which can indicate that the kernel thread
+ * responsible for processing incoming network softIRQs is unable to keep up with the ingress rate.
+ */
+public final class SoftnetStatsMonitor
 {
     private static final int ESTIMATED_LINE_LENGTH = 120;
 
@@ -21,11 +26,21 @@ public final class SoftIrqHandlerTimeSqueezeMonitor
     private SoftnetStatsHandler softnetStatsHandler;
     private int cpuId;
 
-    public SoftIrqHandlerTimeSqueezeMonitor(final Path pathToProcNetSoftnetStat)
+    public SoftnetStatsMonitor()
+    {
+        this(Paths.get("/proc/net/softnet_stat"));
+    }
+
+    SoftnetStatsMonitor(final Path pathToProcNetSoftnetStat)
     {
         fileLoader = new FileLoader(pathToProcNetSoftnetStat, ESTIMATED_LINE_LENGTH * getRuntime().availableProcessors());
     }
 
+    /**
+     * Read from monitored file, report any changed values to the supplied handler.
+     *
+     * @param softnetStatsHandler the handler for changed statistics
+     */
     public void poll(final SoftnetStatsHandler softnetStatsHandler)
     {
         this.softnetStatsHandler = softnetStatsHandler;

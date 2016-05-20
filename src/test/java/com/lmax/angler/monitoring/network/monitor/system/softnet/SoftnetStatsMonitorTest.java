@@ -13,18 +13,18 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class SoftIrqHandlerTimeSqueezeMonitorTest
+public class SoftnetStatsMonitorTest
 {
     private final RecordingSoftnetStatsHandler softnetStatsHandler = new RecordingSoftnetStatsHandler();
     private Path inputPath;
-    private SoftIrqHandlerTimeSqueezeMonitor monitor;
+    private SoftnetStatsMonitor monitor;
 
     @Before
     public void before() throws Exception
     {
         inputPath = Files.createTempFile("proc-net-softnet_stat", "txt");
         ResourceUtil.writeDataFile("proc_net_softnet_stat_sample.txt", inputPath);
-        monitor = new SoftIrqHandlerTimeSqueezeMonitor(inputPath);
+        monitor = new SoftnetStatsMonitor(inputPath);
     }
 
     @After

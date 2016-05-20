@@ -1,5 +1,8 @@
 package com.lmax.angler.monitoring.network.monitor.system.softnet;
 
+/**
+ * Value object
+ */
 final class CpuSoftIrqData
 {
     private final int cpuId;
