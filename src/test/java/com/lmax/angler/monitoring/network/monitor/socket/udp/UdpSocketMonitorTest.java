@@ -1,7 +1,7 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
-import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import com.lmax.angler.monitoring.network.monitor.ResourceUtil;
+import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -172,15 +172,15 @@ public class UdpSocketMonitorTest
         private final List<InetSocketAddress> monitoringStoppedList = new ArrayList<>();
 
         @Override
-        public void socketMonitoringStarted(final InetSocketAddress socketAddress, final long inode)
+        public void socketMonitoringStarted(final InetAddress inetAddress, final int port, final long inode)
         {
-            monitoringStartedList.add(socketAddress);
+            monitoringStartedList.add(new InetSocketAddress(inetAddress, port));
         }
 
         @Override
-        public void socketMonitoringStopped(final InetSocketAddress socketAddress, final long inode)
+        public void socketMonitoringStopped(final InetAddress inetAddress, final int port, final long inode)
         {
-            monitoringStoppedList.add(socketAddress);
+            monitoringStoppedList.add(new InetSocketAddress(inetAddress, port));
         }
 
         List<InetSocketAddress> getMonitoringStartedList()
@@ -199,14 +199,14 @@ public class UdpSocketMonitorTest
         private final List<MonitoredEntry> recordedEntries = new ArrayList<>();
 
         @Override
-        public void onStatisticsUpdated(final InetSocketAddress socketAddress,
+        public void onStatisticsUpdated(final InetAddress inetAddress,
                                         final int port,
                                         final long socketIdentifier,
                                         final long inode,
                                         final long receiveQueueDepth,
                                         final long drops)
         {
-            recordedEntries.add(new MonitoredEntry(socketAddress, port, socketIdentifier, inode, receiveQueueDepth, drops));
+            recordedEntries.add(new MonitoredEntry(inetAddress, port, socketIdentifier, inode, receiveQueueDepth, drops));
         }
 
         List<MonitoredEntry> getRecordedEntries()
@@ -224,14 +224,14 @@ public class UdpSocketMonitorTest
         private final long drops;
 
         MonitoredEntry(
-                final InetSocketAddress socketAddress,
+                final InetAddress inetAddress,
                 final int port,
                 final long socketIdentifier,
                 final long inode,
                 final long receiverQueueDepth,
                 final long drops)
         {
-            this.socketAddress = new InetSocketAddress(socketAddress.getAddress(), port);
+            this.socketAddress = new InetSocketAddress(inetAddress, port);
             this.socketIdentifier = socketIdentifier;
             this.inode = inode;
             this.receiverQueueDepth = receiverQueueDepth;

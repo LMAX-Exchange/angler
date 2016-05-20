@@ -137,15 +137,15 @@ public final class UdpSocketMonitor
                     socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketIdentifier);
                 }
                 monitoredSocketInstances.put(socketInstanceIdentifier,
-                        new UdpBufferStats(socketAddress, entry.getInode()));
-                lifecycleListener.socketMonitoringStarted(socketAddress, entry.getInode());
+                        new UdpBufferStats(socketAddress.getAddress(), socketAddress.getPort(), entry.getInode()));
+                lifecycleListener.socketMonitoringStarted(socketAddress.getAddress(), socketAddress.getPort(), entry.getInode());
             }
             final UdpBufferStats lastUpdate = monitoredSocketInstances.get(socketInstanceIdentifier);
             lastUpdate.updateFrom(entry);
             lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
             {
-                statisticsHandler.onStatisticsUpdated(lastUpdate.getSocketAddress(),
+                statisticsHandler.onStatisticsUpdated(lastUpdate.getInetAddress(),
                         SocketIdentifier.extractPortNumber(socketIdentifier),
                         entry.getSocketIdentifier(), entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
             }
@@ -170,7 +170,7 @@ public final class UdpSocketMonitor
         {
             final long key = keyIterator.nextValue();
             final UdpBufferStats staleEntry = monitoredSocketInstances.remove(key);
-            lifecycleListener.socketMonitoringStopped(staleEntry.getSocketAddress(), staleEntry.getInode());
+            lifecycleListener.socketMonitoringStopped(staleEntry.getInetAddress(), staleEntry.getPort(), staleEntry.getInode());
         }
     }
 

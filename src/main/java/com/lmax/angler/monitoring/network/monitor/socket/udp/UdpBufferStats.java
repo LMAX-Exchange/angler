@@ -1,19 +1,21 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 
 final class UdpBufferStats
 {
-    private final InetSocketAddress socketAddress;
+    private final InetAddress inetAddress;
+    private final int port;
     private final long inode;
     private long receiveQueueDepth = -1;
     private long drops = -1;
     private boolean changed;
     private long updateCount = -1;
 
-    UdpBufferStats(final InetSocketAddress socketAddress, final long inode)
+    UdpBufferStats(final InetAddress inetAddress, final int port, final long inode)
     {
-        this.socketAddress = socketAddress;
+        this.inetAddress = inetAddress;
+        this.port = port;
         this.inode = inode;
     }
 
@@ -45,8 +47,13 @@ final class UdpBufferStats
         return inode;
     }
 
-    InetSocketAddress getSocketAddress()
+    int getPort()
     {
-        return socketAddress;
+        return port;
+    }
+
+    InetAddress getInetAddress()
+    {
+        return inetAddress;
     }
 }

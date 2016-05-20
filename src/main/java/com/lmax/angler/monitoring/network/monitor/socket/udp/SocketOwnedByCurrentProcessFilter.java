@@ -2,7 +2,7 @@ package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
 import org.agrona.collections.LongHashSet;
 
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.util.function.Consumer;
 
 /**
@@ -32,7 +32,7 @@ public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatist
      * {@inheritDoc}
      */
     @Override
-    public void onStatisticsUpdated(final InetSocketAddress socketAddress, final int port, final long socketIdentifier,
+    public void onStatisticsUpdated(final InetAddress inetAddress, final int port, final long socketIdentifier,
                                     final long inode, final long receiveQueueDepth, final long drops)
     {
         if(socketInodesNotOwnedByThisProcess.contains(inode))
@@ -52,7 +52,7 @@ public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatist
 
         if(socketInodesOwnedByThisProcess.contains(inode))
         {
-            delegate.onStatisticsUpdated(socketAddress, port, socketIdentifier, inode, receiveQueueDepth, drops);
+            delegate.onStatisticsUpdated(inetAddress, port, socketIdentifier, inode, receiveQueueDepth, drops);
         }
     }
 

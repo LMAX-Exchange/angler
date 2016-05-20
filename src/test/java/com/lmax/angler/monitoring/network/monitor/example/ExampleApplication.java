@@ -69,21 +69,22 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
         }
     }
 
+    @Override
+    public void socketMonitoringStarted(final InetAddress inetAddress, final int port, final long inode)
+    {
+        log("Started monitoring of socket: %s:%d [inode=%d]", inetAddress.toString(), port, inode);
+    }
+
+    @Override
+    public void socketMonitoringStopped(final InetAddress inetAddress, final int port, final long inode)
+    {
+        log("Stopped monitoring of socket: %s:%d [inode=%d]", inetAddress.toString(), port, inode);
+    }
+
+
     public static void main(final String[] args) throws Exception
     {
         new ExampleApplication().run();
-    }
-
-    @Override
-    public void socketMonitoringStarted(final InetSocketAddress socketAddress, final long inode)
-    {
-        log("Started monitoring of socket: %s [inode=%d]", socketAddress.toString(), inode);
-    }
-
-    @Override
-    public void socketMonitoringStopped(final InetSocketAddress socketAddress, final long inode)
-    {
-        log("Stopped monitoring of socket: %s [inode=%d]", socketAddress.toString(), inode);
     }
 
     private static void log(final String format, final Object... args)
@@ -109,10 +110,10 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStatisticsHandler
     {
         @Override
-        public void onStatisticsUpdated(final InetSocketAddress socketAddress, final int port, final long socketIdentifier,
+        public void onStatisticsUpdated(final InetAddress socketAddress, final int port, final long socketIdentifier,
                                         final long inode, final long receiveQueueDepth, final long drops)
         {
-            log("Socket [%s], queued: %d, drops: %d", socketAddress.toString(), receiveQueueDepth, drops);
+            log("Socket [%s:%d], queued: %d, drops: %d", socketAddress.toString(), port, receiveQueueDepth, drops);
         }
     }
 
