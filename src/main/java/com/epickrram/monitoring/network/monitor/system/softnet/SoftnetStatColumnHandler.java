@@ -1,10 +1,11 @@
 package com.epickrram.monitoring.network.monitor.system.softnet;
 
-import com.epickrram.monitoring.network.monitor.util.HexToLongDecoder;
 import com.epickrram.monitoring.network.monitor.util.TokenHandler;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
+
+import static com.epickrram.monitoring.network.monitor.util.HexToLongDecoder.LOWER_CASE;
 
 public final class SoftnetStatColumnHandler implements TokenHandler
 {
@@ -25,19 +26,19 @@ public final class SoftnetStatColumnHandler implements TokenHandler
             case 0:
                 // total
                 //001d1cac
-                final long total = HexToLongDecoder.LOWER_CASE.decode(src, startPosition, endPosition);
+                final long total = LOWER_CASE.decodeHex(src, startPosition, endPosition);
                 entry.setTotalPackets(total);
                 break;
             case 1:
                 // dropped
                 //001d1cac
-                final long dropped = HexToLongDecoder.LOWER_CASE.decode(src, startPosition, endPosition);
+                final long dropped = LOWER_CASE.decodeHex(src, startPosition, endPosition);
                 entry.setDroppedPackets(dropped);
                 break;
             case 2:
                 // squeeze
                 //001d1cac
-                final long squeeze = HexToLongDecoder.LOWER_CASE.decode(src, startPosition, endPosition);
+                final long squeeze = LOWER_CASE.decodeHex(src, startPosition, endPosition);
                 entry.setTimeSqueeze(squeeze);
                 break;
             default:

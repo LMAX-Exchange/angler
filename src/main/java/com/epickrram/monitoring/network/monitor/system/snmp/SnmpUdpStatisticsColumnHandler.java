@@ -5,7 +5,7 @@ import com.epickrram.monitoring.network.monitor.util.TokenHandler;
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
-import static com.epickrram.monitoring.network.monitor.util.AsciiBytesToLongDecoder.decode;
+import static com.epickrram.monitoring.network.monitor.util.AsciiBytesToLongDecoder.decodeAscii;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class SnmpUdpStatisticsColumnHandler implements TokenHandler
@@ -38,21 +38,21 @@ public final class SnmpUdpStatisticsColumnHandler implements TokenHandler
                 // InErrors
                 if(currentRowIsUdpDataRow)
                 {
-                    entry.setInErrors(decode(src, startPosition, endPosition));
+                    entry.setInErrors(decodeAscii(src, startPosition, endPosition));
                 }
                 break;
             case 5:
                 // RcvBufErrors
                 if(currentRowIsUdpDataRow)
                 {
-                    entry.setReceiveBufferErrors(decode(src, startPosition, endPosition));
+                    entry.setReceiveBufferErrors(decodeAscii(src, startPosition, endPosition));
                 }
                 break;
             case 7:
                 // InChksumErrors
                 if(currentRowIsUdpDataRow)
                 {
-                    entry.setChecksumErrors(decode(src, startPosition, endPosition));
+                    entry.setChecksumErrors(decodeAscii(src, startPosition, endPosition));
                 }
                 break;
             default:

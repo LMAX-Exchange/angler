@@ -1,13 +1,13 @@
 package com.epickrram.monitoring.network.monitor.socket.udp;
 
-import com.epickrram.monitoring.network.monitor.util.AsciiBytesToLongDecoder;
-import com.epickrram.monitoring.network.monitor.util.HexToLongDecoder;
 import com.epickrram.monitoring.network.monitor.util.TokenHandler;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
 
 import static com.epickrram.monitoring.network.monitor.socket.SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort;
+import static com.epickrram.monitoring.network.monitor.util.AsciiBytesToLongDecoder.decodeAscii;
+import static com.epickrram.monitoring.network.monitor.util.HexToLongDecoder.UPPER_CASE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class UdpColumnHandler implements TokenHandler
@@ -39,25 +39,25 @@ public final class UdpColumnHandler implements TokenHandler
                 case 1:
                     // do local address
                     //00000000:4E50
-                    final long socketIpv4Address = HexToLongDecoder.UPPER_CASE.decode(src, startPosition, startPosition + 8);
-                    final long socketPortNumber = HexToLongDecoder.UPPER_CASE.decode(src, startPosition + 9, endPosition);
+                    final long socketIpv4Address = UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
+                    final long socketPortNumber = UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
                     entry.setSocketIdentifier(fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
                     break;
                 case 4:
                     // do rx queue
                     // hex
                     //00000000:00000000
-                    final long receiveQueueDepth = HexToLongDecoder.UPPER_CASE.decode(src, startPosition + 9, endPosition);
+                    final long receiveQueueDepth = UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
                     entry.setReceiveQueueDepth(receiveQueueDepth);
                     break;
                 case 9:
                     // do inode
-                    final long inode = AsciiBytesToLongDecoder.decode(src, startPosition, endPosition);
+                    final long inode = decodeAscii(src, startPosition, endPosition);
                     entry.setInode(inode);
                     break;
                 case 12:
                     // do drops
-                    final long drops = AsciiBytesToLongDecoder.decode(src, startPosition, endPosition);
+                    final long drops = decodeAscii(src, startPosition, endPosition);
                     entry.setDrops(drops);
                     //0
                     break;

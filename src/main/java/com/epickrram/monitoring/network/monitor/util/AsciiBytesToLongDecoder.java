@@ -6,7 +6,7 @@ public final class AsciiBytesToLongDecoder
 {
     private AsciiBytesToLongDecoder() {}
 
-    public static long decode(final ByteBuffer src, final int startPosition, final int endPosition)
+    public static long decodeAscii(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         final int length = endPosition - startPosition;
         if(length == 0)

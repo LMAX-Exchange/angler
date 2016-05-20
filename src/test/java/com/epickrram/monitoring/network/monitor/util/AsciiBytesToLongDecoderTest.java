@@ -19,7 +19,7 @@ public class AsciiBytesToLongDecoderTest
     private void assertAsciiDecode(final String asciiNumber, final long expected)
     {
         final ByteBuffer src = ByteBuffer.wrap(asciiNumber.getBytes(StandardCharsets.UTF_8));
-        final long actual = AsciiBytesToLongDecoder.decode(src, src.position(), src.limit());
+        final long actual = AsciiBytesToLongDecoder.decodeAscii(src, src.position(), src.limit());
         assertThat(actual, is(expected));
     }
 }

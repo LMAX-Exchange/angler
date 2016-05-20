@@ -36,7 +36,7 @@ public class HexToLongDecoderTest
     private static void assertValueDecoded(final String hexEncodedValue, final long expectedDecodedValue)
     {
         final ByteBuffer buffer = prepare(hexEncodedValue);
-        final long value = HexToLongDecoder.UPPER_CASE.decode(buffer, buffer.position(), buffer.limit());
+        final long value = HexToLongDecoder.UPPER_CASE.decodeHex(buffer, buffer.position(), buffer.limit());
 
         assertThat(value, is(expectedDecodedValue));
     }

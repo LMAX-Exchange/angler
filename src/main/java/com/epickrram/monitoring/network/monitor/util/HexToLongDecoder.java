@@ -21,7 +21,7 @@ public enum HexToLongDecoder
         this.isUpperCase = isUpperCase;
     }
 
-    public long decode(final ByteBuffer src, final int startPosition, final int endPosition)
+    public long decodeHex(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         final int length = endPosition - startPosition;
         if(length > 8)
