@@ -4,10 +4,18 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+/**
+ * Utility class for packing IPv4 socket endpoint identifiers into a 64-bit long.
+ */
 public final class SocketIdentifier
 {
     private SocketIdentifier() {}
 
+    /**
+     * Pack IPv4 address and socket into a long.
+     * @param socketAddress the socket address
+     * @return the encoded value
+     */
     public static long fromInet4SocketAddress(final InetSocketAddress socketAddress)
     {
         validateAddressType(socketAddress);
@@ -16,31 +24,36 @@ public final class SocketIdentifier
         return port << 32 | ipAddressOctets;
     }
 
+    /**
+     * Pack a hex-encoded IPv4:port socket address into a long.
+     * @param decodedAddress 32-bit IPv4 address decoded from hex
+     * @param port the port number
+     * @return the encoded value
+     */
     public static long fromLinuxKernelHexEncodedAddressAndPort(final long decodedAddress, final long port)
     {
         return port << 32 | Long.reverseBytes(decodedAddress) >>> 32;
     }
 
-    public static long fromLinuxKernelHexEncodedAddressAndPortAndInode(final long decodedAddress,
-                                                                       final long port,
-                                                                       final long inode)
-    {
-        return inode << 48 | port << 32 | Long.reverseBytes(decodedAddress) >>> 32;
-    }
-
+    /**
+     * Pack inode value into socketIdentifier to differentiate between difference sockets listening to the same port.
+     * @param socketIdentifier the socketIdentifier
+     * @param inode the inode
+     * @return the encoded value
+     */
     public static long overlayInode(final long socketIdentifier, final long inode)
     {
         return  inode << 48 | socketIdentifier;
     }
 
+    /**
+     * Extract port number from a socketIdentifier.
+     * @param socketIdentifier the socketIdentifier
+     * @return the port number
+     */
     public static int extractPortNumber(final long socketIdentifier)
     {
         return (int) ((socketIdentifier >> 32) & 0xFFFF);
-    }
-
-    public static long extractInode(final long socketIdentifier)
-    {
-        return (socketIdentifier >> 48);
     }
 
     public static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException
