@@ -30,6 +30,11 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
+task runExample(dependsOn: 'testClasses', type: JavaExec) {
+    main = 'com.lmax.angler.monitoring.network.monitor.example.ExampleApplication'
+    classpath = sourceSets.test.runtimeClasspath + sourceSets.main.runtimeClasspath
+}
+
 artifacts {
     archives sourcesJar, javadocJar
 }
