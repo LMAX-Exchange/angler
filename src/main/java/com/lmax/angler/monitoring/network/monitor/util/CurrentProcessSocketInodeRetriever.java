@@ -9,12 +9,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
+/**
+ * Retrieves the inodes associated with any sockets owned by the current process.
+ */
 public final class CurrentProcessSocketInodeRetriever implements Consumer<LongHashSet>
 {
     private static final String SOCKET_PREFIX = "socket:[";
     private static final int SOCKET_PREFIX_LENGTH = SOCKET_PREFIX.length();
     private static final long NOT_A_SOCKET = Long.MIN_VALUE;
 
+    /**
+     * Clear and populate the supplied LongHashSet with the inodes associated with sockets owned by this process.
+     * @param targetForOwnedSocketInodes the container for the retrieved inodes
+     */
     @Override
     public void accept(final LongHashSet targetForOwnedSocketInodes)
     {

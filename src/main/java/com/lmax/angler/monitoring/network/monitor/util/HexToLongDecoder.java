@@ -2,6 +2,9 @@ package com.lmax.angler.monitoring.network.monitor.util;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Converts hex-encoded ASCII integer characters to a long value.
+ */
 public enum HexToLongDecoder
 {
     LOWER_CASE(false),
@@ -21,6 +24,13 @@ public enum HexToLongDecoder
         this.isUpperCase = isUpperCase;
     }
 
+    /**
+     * Decode an integer from hex-encoded ASCII bytes.
+     * @param src ASCII bytes
+     * @param startPosition start position in the source buffer
+     * @param endPosition end position in the source buffer
+     * @return the decoded value
+     */
     public long decodeHex(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         final int length = endPosition - startPosition;

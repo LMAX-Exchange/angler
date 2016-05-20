@@ -2,6 +2,9 @@ package com.lmax.angler.monitoring.network.monitor.util;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Parser for delimited data.
+ */
 public final class DelimitedDataParser implements TokenHandler
 {
     private final TokenHandler tokenHandler;
@@ -18,6 +21,9 @@ public final class DelimitedDataParser implements TokenHandler
         this.skipConsecutiveDelimiters = skipConsecutiveDelimiters;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         int currentPosition = startPosition;
@@ -59,13 +65,19 @@ public final class DelimitedDataParser implements TokenHandler
         tokenHandler.complete();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void reset()
     {
         tokenHandler.reset();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public void complete()
     {
-
+        tokenHandler.complete();
     }
 }

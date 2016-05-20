@@ -8,6 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * Utility for repeated reads of a file using a ByteBuffer to avoid allocating unnecessary objects.
+ */
 public final class FileLoader
 {
     private final Path path;
@@ -20,6 +23,11 @@ public final class FileLoader
         buffer = ByteBuffer.allocateDirect(initialBufferCapacity);
     }
 
+    /**
+     * Opens a channel to the specified path if it does not already exist.
+     * Allocates a larger ByteBuffer if file size &gt; current buffer size.
+     * Reads file data into ByteBuffer.
+     */
     public void load()
     {
         try
