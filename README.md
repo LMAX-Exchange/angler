@@ -7,10 +7,11 @@ Angler is a utility for monitoring the performance of inbound UDP message-proces
 ## What can it tell me?
 
 Angler will notify registered listeners of buffer-depths, packet drops and receive errors of individual sockets.
+
 System-wide UDP receive metrics will also be supplied if requested.
 
 
-Current metrics supported are:
+Current metric sources are:
 
 ### `/proc/net/udp`
 
@@ -75,3 +76,11 @@ for further details.
 
 
 To test functionality, check out the project and run `./gradlew runExample`.
+
+
+## Performance notes
+
+Angler will not generate garbage once in a steady-state.
+
+Adding and removing sockets from the monitored set will cause allocation.
+Large changes in the number of active UDP sockets on the system will cause one-time allocation of a larger read-buffer for `/proc/net/udp`.
