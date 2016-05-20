@@ -5,20 +5,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Thread.currentThread;
-import static java.nio.file.Files.copy;
+import static com.epickrram.monitoring.network.monitor.ResourceUtil.writeDataFile;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -35,7 +30,7 @@ public class UdpSocketMonitorTest
     public void before() throws Exception
     {
         inputPath = Files.createTempFile("proc-net-udp", "txt");
-        writeDataFile("proc_net_udp_sample.txt");
+        writeDataFile("proc_net_udp_sample.txt", inputPath);
         monitor = new UdpSocketMonitor(lifecycleListener, inputPath);
     }
 
@@ -70,7 +65,7 @@ public class UdpSocketMonitorTest
         monitor.poll(recordingUdpSocketStatisticsHandler);
         recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
 
-        writeDataFile("proc_net_udp_updated_sample.txt");
+        writeDataFile("proc_net_udp_updated_sample.txt", inputPath);
 
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
@@ -89,7 +84,7 @@ public class UdpSocketMonitorTest
         monitor.poll(recordingUdpSocketStatisticsHandler);
         recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
 
-        writeDataFile("proc_net_udp_updated_sample.txt");
+        writeDataFile("proc_net_udp_updated_sample.txt", inputPath);
 
         monitor.endMonitoringOf(getSocketAddress("192.168.122.1", 53));
 
@@ -128,19 +123,13 @@ public class UdpSocketMonitorTest
         monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
-        writeDataFile("proc_net_udp_socket_removed_sample.txt");
+        writeDataFile("proc_net_udp_socket_removed_sample.txt", inputPath);
 
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
         final List<InetSocketAddress> monitoringStoppedList = lifecycleListener.getMonitoringStoppedList();
         assertThat(monitoringStoppedList.size(), is(1));
         assertThat(monitoringStoppedList.get(0), is(getSocketAddress("0.0.0.0", 20048)));
-    }
-
-    private void writeDataFile(final String resourceName) throws IOException, URISyntaxException
-    {
-        copy(Paths.get(currentThread().getContextClassLoader().getResource(resourceName).toURI()),
-                new FileOutputStream(inputPath.toFile(), false));
     }
 
     private static void assertEntry(final MonitoredEntry monitoredEntry,

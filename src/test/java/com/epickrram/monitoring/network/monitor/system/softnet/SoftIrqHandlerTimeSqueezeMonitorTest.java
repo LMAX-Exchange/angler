@@ -4,17 +4,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.lang.Thread.currentThread;
-import static java.nio.file.Files.copy;
+import static com.epickrram.monitoring.network.monitor.ResourceUtil.writeDataFile;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -27,8 +22,8 @@ public class SoftIrqHandlerTimeSqueezeMonitorTest
     @Before
     public void before() throws Exception
     {
-        inputPath = Files.createTempFile("proc-net-udp", "txt");
-        writeDataFile("proc_net_softnet_stat_sample.txt");
+        inputPath = Files.createTempFile("proc-net-softnet_stat", "txt");
+        writeDataFile("proc_net_softnet_stat_sample.txt", inputPath);
         monitor = new SoftIrqHandlerTimeSqueezeMonitor(inputPath);
     }
 
@@ -60,7 +55,7 @@ public class SoftIrqHandlerTimeSqueezeMonitorTest
 
         softnetStatsHandler.getRecordedEntries().clear();
 
-        writeDataFile("proc_net_softnet_stat_updated_sample.txt");
+        writeDataFile("proc_net_softnet_stat_updated_sample.txt", inputPath);
 
         monitor.poll(softnetStatsHandler);
 
@@ -80,12 +75,6 @@ public class SoftIrqHandlerTimeSqueezeMonitorTest
         assertThat(softnetStatEntry.getProcessed(), is(total));
         assertThat(softnetStatEntry.getDropped(), is(dropped));
         assertThat(softnetStatEntry.getSqueezed(), is(timeSqueeze));
-    }
-
-    private void writeDataFile(final String resourceName) throws IOException, URISyntaxException
-    {
-        copy(Paths.get(currentThread().getContextClassLoader().getResource(resourceName).toURI()),
-                new FileOutputStream(inputPath.toFile(), false));
     }
 
     private static class RecordingSoftnetStatsHandler implements SoftnetStatsHandler
