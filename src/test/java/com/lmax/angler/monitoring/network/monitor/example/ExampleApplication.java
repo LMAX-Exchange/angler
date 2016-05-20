@@ -109,7 +109,7 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStatisticsHandler
     {
         @Override
-        public void onStatisticsUpdated(final InetSocketAddress socketAddress, final long socketIdentifier,
+        public void onStatisticsUpdated(final InetSocketAddress socketAddress, final int port, final long socketIdentifier,
                                         final long inode, final long receiveQueueDepth, final long drops)
         {
             log("Socket [%s], queued: %d, drops: %d", socketAddress.toString(), receiveQueueDepth, drops);

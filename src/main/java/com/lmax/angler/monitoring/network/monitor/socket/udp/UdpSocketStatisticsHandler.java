@@ -11,6 +11,7 @@ public interface UdpSocketStatisticsHandler
     /**
      * Callback method.
      * @param socketAddress the socket address
+     * @param port the socket port
      * @param socketIdentifier the socket identifier
      * @param inode the socket inode
      * @param receiveQueueDepth the sampled receive queue depth
@@ -18,6 +19,7 @@ public interface UdpSocketStatisticsHandler
      */
     void onStatisticsUpdated(
             final InetSocketAddress socketAddress,
+            final int port,
             final long socketIdentifier,
             final long inode,
             final long receiveQueueDepth,

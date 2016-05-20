@@ -78,7 +78,7 @@ final class UdpColumnHandler implements TokenHandler
     @Override
     public void complete()
     {
-        if(!headerRow)
+        if(!headerRow && currentColumn != 0)
         {
             bufferStatsEntryConsumer.accept(entry);
         }

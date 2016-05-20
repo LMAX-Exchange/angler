@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -43,7 +44,6 @@ public class UdpSocketMonitorTest
     @Test
     public void shouldSampleMonitoredSockets() throws Exception
     {
-
         monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
         monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
         monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
@@ -73,6 +73,19 @@ public class UdpSocketMonitorTest
         assertThat(recordedEntries.size(), is(2));
         assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
         assertEntry(recordedEntries.get(1), "192.168.122.1", 53, 166, 2, 15292);
+    }
+
+    @Test
+    public void shouldAllowTrackingOfAllSocketsForSpecifiedIpAddress() throws Exception
+    {
+        monitor.beginMonitoringOf(Inet4Address.getByName("0.0.0.0"));
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
+        assertThat(recordedEntries.size(), is(2));
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 20048, 0, 0, 21682);
+        assertEntry(recordedEntries.get(1), "0.0.0.0", 56150, 0, 4, 13597);
     }
 
     @Test
@@ -187,12 +200,13 @@ public class UdpSocketMonitorTest
 
         @Override
         public void onStatisticsUpdated(final InetSocketAddress socketAddress,
+                                        final int port,
                                         final long socketIdentifier,
                                         final long inode,
                                         final long receiveQueueDepth,
                                         final long drops)
         {
-            recordedEntries.add(new MonitoredEntry(socketAddress, socketIdentifier, inode, receiveQueueDepth, drops));
+            recordedEntries.add(new MonitoredEntry(socketAddress, port, socketIdentifier, inode, receiveQueueDepth, drops));
         }
 
         List<MonitoredEntry> getRecordedEntries()
@@ -211,12 +225,13 @@ public class UdpSocketMonitorTest
 
         MonitoredEntry(
                 final InetSocketAddress socketAddress,
+                final int port,
                 final long socketIdentifier,
                 final long inode,
                 final long receiverQueueDepth,
                 final long drops)
         {
-            this.socketAddress = socketAddress;
+            this.socketAddress = new InetSocketAddress(socketAddress.getAddress(), port);
             this.socketIdentifier = socketIdentifier;
             this.inode = inode;
             this.receiverQueueDepth = receiverQueueDepth;

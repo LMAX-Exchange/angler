@@ -1,6 +1,7 @@
 package com.lmax.angler.monitoring.network.monitor.socket;
 
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
@@ -22,6 +23,33 @@ public final class SocketIdentifier
         final long ipAddressOctets = Integer.toUnsignedLong(socketAddress.getAddress().hashCode());
         final long port = socketAddress.getPort();
         return port << 32 | ipAddressOctets;
+    }
+
+    /**
+     * Pack IPv4 address and match-all socket flag into a long.
+     * @param inetAddress the host address
+     * @return the encoded value
+     */
+    public static long fromInet4Address(final InetAddress inetAddress)
+    {
+        ensureIsInet4Address(inetAddress);
+
+        return Integer.toUnsignedLong(inetAddress.hashCode());
+    }
+
+    /**
+     * Is this socketIdentifier a match for all ports on the encoded IP address.
+     * @param socketIdentifier the encoded value
+     * @return whether this socketIdentifier matches all ports
+     */
+    public static boolean isMatchAllSocketFlagSet(final long socketIdentifier)
+    {
+        return extractPortNumber(socketIdentifier) == 0L;
+    }
+
+    public static long asMatchAllSocketsSocketIdentifier(final long socketIdentifier)
+    {
+        return 0xFFFF0000FFFFFFFFL & socketIdentifier;
     }
 
     /**
@@ -53,7 +81,7 @@ public final class SocketIdentifier
      */
     public static int extractPortNumber(final long socketIdentifier)
     {
-        return (int) ((socketIdentifier >> 32) & 0xFFFF);
+        return (int) ((socketIdentifier >> 32) & 0xFFFFL);
     }
 
     public static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException
@@ -68,7 +96,12 @@ public final class SocketIdentifier
 
     private static void validateAddressType(final InetSocketAddress socketAddress)
     {
-        if(!(socketAddress.getAddress() instanceof Inet4Address))
+        ensureIsInet4Address(socketAddress.getAddress());
+    }
+
+    private static void ensureIsInet4Address(final InetAddress address)
+    {
+        if(!(address instanceof Inet4Address))
         {
             throw new IllegalArgumentException("Due to the nature of some awful hacks, " +
                     "I only work with Inet4Address-based sockets");

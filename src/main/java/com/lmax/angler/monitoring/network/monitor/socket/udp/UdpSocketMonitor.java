@@ -7,6 +7,7 @@ import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -80,27 +81,7 @@ public final class UdpSocketMonitor
      */
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
-        final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);
-
-        while (true)
-        {
-            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
-            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
-
-            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
-            while(keyIterator.hasNext())
-            {
-                final long key = keyIterator.nextLong();
-                updated.put(key, candidateSnapshot.get(key));
-            }
-
-            updated.put(socketIdentifier, socketAddress);
-
-            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
-            {
-                break;
-            }
-        }
+        beginMonitoringSocketIdentifier(socketAddress, SocketIdentifier.fromInet4SocketAddress(socketAddress));
     }
 
     /**
@@ -112,50 +93,61 @@ public final class UdpSocketMonitor
      */
     public void endMonitoringOf(final InetSocketAddress socketAddress)
     {
-        final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);
+        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4SocketAddress(socketAddress));
+    }
 
-        while (true)
+    public void beginMonitoringOf(final InetAddress inetAddress)
+    {
+        final long socketIdentifier = SocketIdentifier.fromInet4Address(inetAddress);
+        beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
+    }
+
+    public void endMonitoringOf(final InetAddress inetAddress)
+    {
+        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
+    }
+
+    private static String to64Chars(final String input)
+    {
+        final StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < 64 - input.length(); i++)
         {
-            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
-            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
-
-            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
-            while(keyIterator.hasNext())
-            {
-                final long key = keyIterator.nextLong();
-                if(key != socketIdentifier)
-                {
-                    updated.put(key, candidateSnapshot.get(key));
-                }
-            }
-
-            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
-            {
-                break;
-            }
+            sb.append("0");
         }
+        return sb.append(input).toString();
     }
 
     private void handleEntry(final BufferStatsEntry entry)
     {
         final long socketIdentifier = entry.getSocketIdentifier();
+        final long matchAllPortsSocketIdentifier = SocketIdentifier.asMatchAllSocketsSocketIdentifier(socketIdentifier);
         final Long2ObjectHashMap<InetSocketAddress> candidateSocketsSnapshot = candidateSockets.get();
-        if(candidateSocketsSnapshot.containsKey(socketIdentifier))
+
+        if(candidateSocketsSnapshot.containsKey(socketIdentifier) ||
+           candidateSocketsSnapshot.containsKey(matchAllPortsSocketIdentifier))
         {
             final long socketInstanceIdentifier = entry.getSocketInstanceIndentifier();
             if(!monitoredSocketInstances.containsKey(socketInstanceIdentifier))
             {
+                InetSocketAddress socketAddress = candidateSocketsSnapshot.get(socketIdentifier);
+                if(socketAddress == null)
+                {
+                    // this is a match-all request
+                    // need to construct socket address based on entry
+                    socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketIdentifier);
+                }
                 monitoredSocketInstances.put(socketInstanceIdentifier,
-                        new UdpBufferStats(candidateSocketsSnapshot.get(socketIdentifier), entry.getInode()));
-                lifecycleListener.socketMonitoringStarted(candidateSocketsSnapshot.get(socketIdentifier), entry.getInode());
+                        new UdpBufferStats(socketAddress, entry.getInode()));
+                lifecycleListener.socketMonitoringStarted(socketAddress, entry.getInode());
             }
             final UdpBufferStats lastUpdate = monitoredSocketInstances.get(socketInstanceIdentifier);
             lastUpdate.updateFrom(entry);
             lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
             {
-                statisticsHandler.onStatisticsUpdated(lastUpdate.socketAddress, entry.getSocketIdentifier(),
-                        entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
+                statisticsHandler.onStatisticsUpdated(lastUpdate.getSocketAddress(),
+                        SocketIdentifier.extractPortNumber(socketIdentifier),
+                        entry.getSocketIdentifier(), entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
             }
         }
     }
@@ -182,52 +174,50 @@ public final class UdpSocketMonitor
         }
     }
 
-    private static final class UdpBufferStats
+    private void beginMonitoringSocketIdentifier(final InetSocketAddress socketAddress, final long socketIdentifier)
     {
-        private final InetSocketAddress socketAddress;
-        private final long inode;
-        private long receiveQueueDepth = -1;
-        private long drops = -1;
-        private boolean changed;
-        private long updateCount = -1;
-
-        UdpBufferStats(final InetSocketAddress socketAddress, final long inode)
+        while (true)
         {
-            this.socketAddress = socketAddress;
-            this.inode = inode;
+            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
+            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
+
+            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
+            while(keyIterator.hasNext())
+            {
+                final long key = keyIterator.nextLong();
+                updated.put(key, candidateSnapshot.get(key));
+            }
+
+            updated.put(socketIdentifier, socketAddress);
+
+            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
+            {
+                break;
+            }
         }
+    }
 
-        void updateFrom(final BufferStatsEntry entry)
+    private void endMonitoringOfSocketIdentifier(final long socketIdentifier)
+    {
+        while (true)
         {
-            changed = (this.receiveQueueDepth != entry.getReceiveQueueDepth()) ||
-                    (this.drops != entry.getDrops());
-            this.receiveQueueDepth = entry.getReceiveQueueDepth();
-            this.drops = entry.getDrops();
-        }
+            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
+            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
 
-        boolean hasChanged()
-        {
-            return changed;
-        }
+            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
+            while(keyIterator.hasNext())
+            {
+                final long key = keyIterator.nextLong();
+                if(key != socketIdentifier)
+                {
+                    updated.put(key, candidateSnapshot.get(key));
+                }
+            }
 
-        void updateCount(final long updateCount)
-        {
-            this.updateCount = updateCount;
-        }
-
-        long getUpdateCount()
-        {
-            return updateCount;
-        }
-
-        long getInode()
-        {
-            return inode;
-        }
-
-        InetSocketAddress getSocketAddress()
-        {
-            return socketAddress;
+            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
+            {
+                break;
+            }
         }
     }
 }

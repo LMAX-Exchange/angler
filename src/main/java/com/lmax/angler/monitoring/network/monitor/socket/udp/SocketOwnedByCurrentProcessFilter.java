@@ -32,7 +32,7 @@ public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatist
      * {@inheritDoc}
      */
     @Override
-    public void onStatisticsUpdated(final InetSocketAddress socketAddress, final long socketIdentifier,
+    public void onStatisticsUpdated(final InetSocketAddress socketAddress, final int port, final long socketIdentifier,
                                     final long inode, final long receiveQueueDepth, final long drops)
     {
         if(socketInodesNotOwnedByThisProcess.contains(inode))
@@ -52,7 +52,7 @@ public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatist
 
         if(socketInodesOwnedByThisProcess.contains(inode))
         {
-            delegate.onStatisticsUpdated(socketAddress, socketIdentifier, inode, receiveQueueDepth, drops);
+            delegate.onStatisticsUpdated(socketAddress, port, socketIdentifier, inode, receiveQueueDepth, drops);
         }
     }
 
