@@ -10,8 +10,12 @@ import org.agrona.collections.LongIterator;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Monitor for reporting changes in /proc/net/udp.
+ */
 public final class UdpSocketMonitor
 {
     private static final double AGRONA_DEFAULT_LOAD_FACTOR = 0.67;
@@ -28,12 +32,21 @@ public final class UdpSocketMonitor
     private UdpSocketStatisticsHandler statisticsHandler;
     private long updateCount = 0;
 
-    public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
+    public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener)
+    {
+        this(lifecycleListener, Paths.get("/proc/net/udp"));
+    }
+
+    UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
         this.lifecycleListener = lifecycleListener;
         fileLoader = new FileLoader(pathToProcNetUdp, 65536);
     }
 
+    /**
+     * Read from monitored file, report any changed values for monitored socket statistics.
+     * @param handler the callback for socket statistics
+     */
     public void poll(final UdpSocketStatisticsHandler handler)
     {
         this.statisticsHandler = handler;
@@ -55,6 +68,10 @@ public final class UdpSocketMonitor
         updateCount++;
     }
 
+    /**
+     * Register interest in a socket.
+     * @param socketAddress the socket address
+     */
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
         final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);
@@ -80,6 +97,10 @@ public final class UdpSocketMonitor
         }
     }
 
+    /**
+     * Deregister interest in a socket.
+     * @param socketAddress the socket address
+     */
     public void endMonitoringOf(final InetSocketAddress socketAddress)
     {
         final long socketIdentifier = SocketIdentifier.fromInet4SocketAddress(socketAddress);

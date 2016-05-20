@@ -21,6 +21,9 @@ final class SoftnetStatColumnHandler implements TokenHandler
         this.cpuSoftIrqDataConsumer = cpuSoftIrqDataConsumer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {

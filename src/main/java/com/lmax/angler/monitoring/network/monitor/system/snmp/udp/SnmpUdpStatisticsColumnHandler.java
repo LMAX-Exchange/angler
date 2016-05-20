@@ -24,6 +24,9 @@ public final class SnmpUdpStatisticsColumnHandler implements TokenHandler
         this.globalUdpStatisticsConsumer = globalUdpStatisticsConsumer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {

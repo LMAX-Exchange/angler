@@ -2,6 +2,9 @@ package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 
+/**
+ * Value object.
+ */
 final class BufferStatsEntry
 {
     private long socketIdentifier;
@@ -9,52 +12,52 @@ final class BufferStatsEntry
     private long drops;
     private long inode;
 
-    public long getSocketIdentifier()
+    long getSocketIdentifier()
     {
         return socketIdentifier;
     }
 
-    public long getSocketInstanceIndentifier()
+    long getSocketInstanceIndentifier()
     {
         return SocketIdentifier.overlayInode(socketIdentifier, inode);
     }
 
-    public void setSocketIdentifier(final long socketIdentifier)
+    void setSocketIdentifier(final long socketIdentifier)
     {
         this.socketIdentifier = socketIdentifier;
     }
 
-    public void setInode(final long inode)
+    void setInode(final long inode)
     {
         this.inode = inode;
     }
 
-    public long getReceiveQueueDepth()
+    long getReceiveQueueDepth()
     {
         return receiveQueueDepth;
     }
 
-    public void setReceiveQueueDepth(final long receiveQueueDepth)
+    void setReceiveQueueDepth(final long receiveQueueDepth)
     {
         this.receiveQueueDepth = receiveQueueDepth;
     }
 
-    public long getDrops()
+    long getDrops()
     {
         return drops;
     }
 
-    public void setDrops(final long drops)
+    void setDrops(final long drops)
     {
         this.drops = drops;
     }
 
-    public long getInode()
+    long getInode()
     {
         return inode;
     }
 
-    public void reset()
+    void reset()
     {
         socketIdentifier = 0L;
         receiveQueueDepth = 0L;

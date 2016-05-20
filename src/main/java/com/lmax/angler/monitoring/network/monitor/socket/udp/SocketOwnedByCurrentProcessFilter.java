@@ -5,6 +5,9 @@ import org.agrona.collections.LongHashSet;
 import java.net.InetSocketAddress;
 import java.util.function.Consumer;
 
+/**
+ * Filter class: will only notify delegate if reported socket is owned by the current process.
+ */
 public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatisticsHandler
 {
     static final int MAX_NOT_OWNED_INODE_CACHE_SIZE = 4096;
@@ -25,6 +28,9 @@ public final class SocketOwnedByCurrentProcessFilter implements UdpSocketStatist
         this.socketInodeRetriever = socketInodeRetriever;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onStatisticsUpdated(final InetSocketAddress socketAddress, final long socketIdentifier,
                                     final long inode, final long receiveQueueDepth, final long drops)

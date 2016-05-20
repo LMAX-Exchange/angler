@@ -10,7 +10,10 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class UdpColumnHandler implements TokenHandler
+/**
+ * TokenHandler for entries in /proc/net/udp.
+ */
+final class UdpColumnHandler implements TokenHandler
 {
     private static final short HEADER_ROW_FIRST_COLUMN_VALUE = ByteBuffer.wrap("sl".getBytes(UTF_8)).getShort();
     private final Consumer<BufferStatsEntry> bufferStatsEntryConsumer;
@@ -23,6 +26,9 @@ public final class UdpColumnHandler implements TokenHandler
         this.bufferStatsEntryConsumer = bufferStatsEntryConsumer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {
