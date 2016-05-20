@@ -1,12 +1,12 @@
-package com.epickrram.monitoring.network.monitor.system.snmp;
+package com.epickrram.monitoring.network.monitor.system.snmp.udp;
 
-final class GlobalUdpStatistics
+public final class GlobalUdpStatistics
 {
     private long inErrors;
     private long receiveBufferErrors;
     private long checksumErrors;
 
-    long getInErrors()
+    public long getInErrors()
     {
         return inErrors;
     }
@@ -16,7 +16,7 @@ final class GlobalUdpStatistics
         this.inErrors = inErrors;
     }
 
-    long getReceiveBufferErrors()
+    public long getReceiveBufferErrors()
     {
         return receiveBufferErrors;
     }
@@ -26,7 +26,7 @@ final class GlobalUdpStatistics
         this.receiveBufferErrors = receiveBufferErrors;
     }
 
-    long getChecksumErrors()
+    public long getChecksumErrors()
     {
         return checksumErrors;
     }

@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor.system.snmp;
+package com.epickrram.monitoring.network.monitor.system.snmp.udp;
 
 import com.epickrram.monitoring.network.monitor.util.TokenHandler;
 

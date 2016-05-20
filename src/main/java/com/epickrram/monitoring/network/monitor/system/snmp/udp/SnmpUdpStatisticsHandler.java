@@ -1,4 +1,4 @@
-package com.epickrram.monitoring.network.monitor.system.snmp;
+package com.epickrram.monitoring.network.monitor.system.snmp.udp;
 
 @FunctionalInterface
 public interface SnmpUdpStatisticsHandler
