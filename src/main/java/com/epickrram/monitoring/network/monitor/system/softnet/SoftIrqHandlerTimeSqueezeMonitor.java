@@ -23,7 +23,7 @@ public final class SoftIrqHandlerTimeSqueezeMonitor
 
     public SoftIrqHandlerTimeSqueezeMonitor(final Path pathToProcNetSoftnetStat)
     {
-        fileLoader = new FileLoader(ESTIMATED_LINE_LENGTH * getRuntime().availableProcessors(), pathToProcNetSoftnetStat);
+        fileLoader = new FileLoader(pathToProcNetSoftnetStat, ESTIMATED_LINE_LENGTH * getRuntime().availableProcessors());
     }
 
     public void poll(final SoftnetStatsHandler softnetStatsHandler)

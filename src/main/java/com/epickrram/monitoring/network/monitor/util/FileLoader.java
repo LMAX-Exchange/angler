@@ -14,7 +14,7 @@ public final class FileLoader
     private ByteBuffer buffer;
     private FileChannel fileChannel;
 
-    public FileLoader(final int initialBufferCapacity, final Path path)
+    public FileLoader(final Path path, final int initialBufferCapacity)
     {
         this.path = path;
         buffer = ByteBuffer.allocateDirect(initialBufferCapacity);

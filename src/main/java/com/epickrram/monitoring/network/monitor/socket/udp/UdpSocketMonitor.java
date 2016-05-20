@@ -31,7 +31,7 @@ public final class UdpSocketMonitor
     public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
         this.lifecycleListener = lifecycleListener;
-        fileLoader = new FileLoader(65536, pathToProcNetUdp);
+        fileLoader = new FileLoader(pathToProcNetUdp, 65536);
     }
 
     public void poll(final UdpSocketStatisticsHandler handler)
