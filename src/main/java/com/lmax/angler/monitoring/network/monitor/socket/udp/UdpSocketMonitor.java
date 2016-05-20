@@ -73,6 +73,9 @@ public final class UdpSocketMonitor
 
     /**
      * Register interest in a socket.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
      * @param socketAddress the socket address
      */
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
@@ -101,7 +104,10 @@ public final class UdpSocketMonitor
     }
 
     /**
-     * Deregister interest in a socket.
+     * De-register interest in a socket.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
      * @param socketAddress the socket address
      */
     public void endMonitoringOf(final InetSocketAddress socketAddress)
