@@ -1,7 +1,5 @@
 # Angler
 
-## What is it?
-
 Angler is a utility for monitoring the performance of inbound UDP message-processing in the Linux kernel.
 
 ### Maintainer
