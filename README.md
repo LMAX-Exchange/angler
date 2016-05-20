@@ -4,6 +4,11 @@
 
 Angler is a utility for monitoring the performance of inbound UDP message-processing in the Linux kernel.
 
+### Maintainer
+
+[Mark Price](https://github.com/epickrram)
+
+
 ## What can it tell me?
 
 Angler will notify registered listeners of buffer-depths, packet drops and receive errors of individual sockets.
