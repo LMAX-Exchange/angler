@@ -1,6 +1,9 @@
 package com.lmax.angler.monitoring.network.monitor.system.snmp.udp;
 
-public final class GlobalUdpStatistics
+/**
+ * Value object.
+ */
+final class GlobalUdpStatistics
 {
     private long inErrors;
     private long receiveBufferErrors;

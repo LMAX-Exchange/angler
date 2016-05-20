@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.system.snmp;
 
-import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.GlobalUdpStatistics;
 import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.SnmpUdpStatisticsColumnHandler;
 import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.SnmpUdpStatisticsHandler;
 import com.lmax.angler.monitoring.network.monitor.util.DelimitedDataParser;
@@ -8,7 +7,11 @@ import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
+/**
+ * Monitor for reporting changes in /proc/net/snmp.
+ */
 public final class SystemNetworkManagementMonitor
 {
     private final DelimitedDataParser columnParser = new DelimitedDataParser(new SnmpUdpStatisticsColumnHandler(this::onUpdate), (byte)' ', true);
@@ -16,11 +19,20 @@ public final class SystemNetworkManagementMonitor
     private final FileLoader fileLoader;
     private SnmpUdpStatisticsHandler statisticsHandler;
 
-    public SystemNetworkManagementMonitor(final Path pathToProcNetSnmp)
+    public SystemNetworkManagementMonitor()
+    {
+        this(Paths.get("/proc/net/snmp"));
+    }
+
+    SystemNetworkManagementMonitor(final Path pathToProcNetSnmp)
     {
         fileLoader = new FileLoader(pathToProcNetSnmp, 4096);
     }
 
+    /**
+     * Read from monitored file, report any changed values for UDP statistics.
+     * @param snmpUdpStatisticsHandler the handler for changed statistics
+     */
     public void poll(final SnmpUdpStatisticsHandler snmpUdpStatisticsHandler)
     {
         this.statisticsHandler = snmpUdpStatisticsHandler;
@@ -38,11 +50,8 @@ public final class SystemNetworkManagementMonitor
         }
     }
 
-    private void onUpdate(final GlobalUdpStatistics globalUdpStatistics)
+    private void onUpdate(final long inErrors, final long receiveBufferErrors, final long checksumErrors)
     {
-        this.statisticsHandler.onStatisticsUpdated(
-                globalUdpStatistics.getInErrors(),
-                globalUdpStatistics.getReceiveBufferErrors(),
-                globalUdpStatistics.getChecksumErrors());
+        this.statisticsHandler.onStatisticsUpdated(inErrors, receiveBufferErrors, checksumErrors);
     }
 }
