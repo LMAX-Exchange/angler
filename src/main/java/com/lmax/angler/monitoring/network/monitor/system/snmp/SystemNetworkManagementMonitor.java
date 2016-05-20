@@ -31,6 +31,9 @@ public final class SystemNetworkManagementMonitor
 
     /**
      * Read from monitored file, report any changed values for UDP statistics.
+     *
+     * Not thread-safe, only call from a single thread.
+     *
      * @param snmpUdpStatisticsHandler the handler for changed statistics
      */
     public void poll(final SnmpUdpStatisticsHandler snmpUdpStatisticsHandler)

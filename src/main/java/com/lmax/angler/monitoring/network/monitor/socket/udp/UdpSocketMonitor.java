@@ -45,6 +45,9 @@ public final class UdpSocketMonitor
 
     /**
      * Read from monitored file, report any changed values for monitored socket statistics.
+     *
+     * Not thread-safe, only call from a single thread.
+     *
      * @param handler the callback for socket statistics
      */
     public void poll(final UdpSocketStatisticsHandler handler)

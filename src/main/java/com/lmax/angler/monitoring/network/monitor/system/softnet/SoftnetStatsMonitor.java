@@ -39,6 +39,8 @@ public final class SoftnetStatsMonitor
     /**
      * Read from monitored file, report any changed values to the supplied handler.
      *
+     * Not thread-safe, only call from a single thread.
+     *
      * @param softnetStatsHandler the handler for changed statistics
      */
     public void poll(final SoftnetStatsHandler softnetStatsHandler)
