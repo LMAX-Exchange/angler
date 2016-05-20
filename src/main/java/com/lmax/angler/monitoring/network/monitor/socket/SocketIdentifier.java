@@ -3,7 +3,6 @@ package com.lmax.angler.monitoring.network.monitor.socket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 /**
  * Utility class for packing IPv4 socket endpoint identifiers into a 64-bit long.
@@ -47,6 +46,11 @@ public final class SocketIdentifier
         return extractPortNumber(socketIdentifier) == 0L;
     }
 
+    /**
+     * Mast the port number out of this socket identifier.
+     * @param socketIdentifier the encoded value
+     * @return the socketIdentifier with the port number masked out
+     */
     public static long asMatchAllSocketsSocketIdentifier(final long socketIdentifier)
     {
         return 0xFFFF0000FFFFFFFFL & socketIdentifier;
@@ -84,15 +88,6 @@ public final class SocketIdentifier
         return (int) ((socketIdentifier >> 32) & 0xFFFFL);
     }
 
-    public static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException
-    {
-        final byte[] address = new byte[4];
-        address[3] = (byte) (socketIdentifier & 0xFF);
-        address[2] = (byte) (socketIdentifier >> 8 & 0xFF);
-        address[1] = (byte) (socketIdentifier >> 16 & 0xFF);
-        address[0] = (byte) (socketIdentifier >> 24 & 0xFF);
-        return Inet4Address.getByAddress(address).getHostAddress();
-    }
 
     private static void validateAddressType(final InetSocketAddress socketAddress)
     {

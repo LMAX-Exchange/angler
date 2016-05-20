@@ -153,7 +153,7 @@ public class UdpSocketMonitorTest
                                     final long inode) throws UnknownHostException
     {
         final long socketIdentifier = monitoredEntry.getSocketIdentifier();
-        assertThat(SocketIdentifier.extractHostIpAddress(socketIdentifier), is(address));
+        assertThat(extractHostIpAddress(socketIdentifier), is(address));
         assertThat(SocketIdentifier.extractPortNumber(socketIdentifier), is(port));
         assertThat(monitoredEntry.getReceiverQueueDepth(), is(queueDepth));
         assertThat(monitoredEntry.getDrops(), is(dropCount));
@@ -262,5 +262,15 @@ public class UdpSocketMonitorTest
         {
             return inode;
         }
+    }
+
+    private static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException
+    {
+        final byte[] address = new byte[4];
+        address[3] = (byte) (socketIdentifier & 0xFF);
+        address[2] = (byte) (socketIdentifier >> 8 & 0xFF);
+        address[1] = (byte) (socketIdentifier >> 16 & 0xFF);
+        address[0] = (byte) (socketIdentifier >> 24 & 0xFF);
+        return Inet4Address.getByAddress(address).getHostAddress();
     }
 }

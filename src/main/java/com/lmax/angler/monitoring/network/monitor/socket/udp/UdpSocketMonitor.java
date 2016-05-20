@@ -107,16 +107,6 @@ public final class UdpSocketMonitor
         endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
     }
 
-    private static String to64Chars(final String input)
-    {
-        final StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < 64 - input.length(); i++)
-        {
-            sb.append("0");
-        }
-        return sb.append(input).toString();
-    }
-
     private void handleEntry(final BufferStatsEntry entry)
     {
         final long socketIdentifier = entry.getSocketIdentifier();
