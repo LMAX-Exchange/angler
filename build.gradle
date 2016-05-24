@@ -6,11 +6,11 @@ repositories {
 }
 
 dependencies {
-    compile 'org.agrona:Agrona:0.5'
+    compile 'org.agrona:Agrona:0.5.1'
     testCompile "junit:junit:4.11"
 }
 
-version = new Version(major: 1, minor: 0, revision: 1)
+version = new Version(major: 1, minor: 0, revision: 2)
 
 sourceSets {
     main {
@@ -41,7 +41,7 @@ artifacts {
 
 
 class Version {
-    int major = 1, minor = 0, revision = 1
+    int major = 1, minor = 0, revision = 2
 
     String toString() {
         "$major.$minor.$revision"
