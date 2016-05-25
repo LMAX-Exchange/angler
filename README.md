@@ -59,7 +59,7 @@ Implement a handler for the socket statistics:
 private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStatisticsHandler
 {
     @Override
-    public void onStatisticsUpdated(final InetSocketAddress socketAddress, final long socketIdentifier,
+    public void onStatisticsUpdated(final InetAddress inetAddress, final int port, final long socketIdentifier,
                                     final long inode, final long receiveQueueDepth, final long drops)
     {
         if(drops != 0)
@@ -87,3 +87,10 @@ Angler will not generate garbage once in a steady-state.
 
 Adding and removing sockets from the monitored set will cause allocation.
 Large changes in the number of active UDP sockets on the system will cause one-time allocation of a larger read-buffer for `/proc/net/udp`.
+
+
+## Change log
+
+### 1.0.2
+
+   * Upgrade to Agrona 0.5.1
