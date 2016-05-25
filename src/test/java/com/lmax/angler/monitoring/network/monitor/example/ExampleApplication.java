@@ -161,7 +161,7 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     {
         final NetworkInterface networkInterface = getMulticastCapableNetworkInterface();
         final DatagramChannel channel = DatagramChannel.open(StandardProtocolFamily.INET);
-        channel.bind(new InetSocketAddress(port));
+        channel.bind(new InetSocketAddress(address, port));
         channel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
         channel.setOption(StandardSocketOptions.IP_MULTICAST_IF, networkInterface);
         channel.join(address, networkInterface);
