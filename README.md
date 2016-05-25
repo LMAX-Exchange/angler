@@ -59,12 +59,14 @@ Implement a handler for the socket statistics:
 private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStatisticsHandler
 {
     @Override
-    public void onStatisticsUpdated(final InetAddress inetAddress, final int port, final long socketIdentifier,
-                                    final long inode, final long receiveQueueDepth, final long drops)
+    public void onStatisticsUpdated(final InetAddress inetAddress, final int port,
+                                    final long socketIdentifier, final long inode,
+                                    final long receiveQueueDepth, final long drops)
     {
         if(drops != 0)
         {
-            log("Socket [%s], queued: %d, drops: %d", socketAddress.toString(), receiveQueueDepth, drops);
+            log("Socket [%s:%d], queued: %d, drops: %d",
+                    inetAddress.toString(), port, receiveQueueDepth, drops);
         }
     }
 }
