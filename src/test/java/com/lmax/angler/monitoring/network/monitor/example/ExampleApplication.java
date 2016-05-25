@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Enumeration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ExampleApplication implements UdpSocketMonitoringLifecycleListener
 {
@@ -35,6 +36,7 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     private final SoftnetStatsHandler changeLoggingSoftnetStatsHandler = new ChangeLoggingSoftnetStatsHandler();
     private final UdpSocketStatisticsHandler changeLoggingUdpSocketStatisticsHandler = new LoggingUdpSocketStatisticsHandler();
     private final SnmpUdpStatisticsHandler changeLoggingSnmpUdpStatisticsHandler = new ChangeLoggingSnmpUdpStatisticsHandler();
+    private final AtomicInteger monitoredSocketCount = new AtomicInteger(0);
 
     private void run() throws Exception
     {
@@ -46,6 +48,8 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
             udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c0.getLocalAddress());
             udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c1.getLocalAddress());
             udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c2.getLocalAddress());
+
+            waitForMonitoringToStart();
 
             Thread.sleep(TimeUnit.SECONDS.toMillis(1L));
 
@@ -79,6 +83,7 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     public void socketMonitoringStarted(final InetAddress inetAddress, final int port, final long inode)
     {
         log("Started monitoring of socket: %s:%d [inode=%d]", inetAddress.toString(), port, inode);
+        monitoredSocketCount.getAndIncrement();
     }
 
     @Override
@@ -87,6 +92,20 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
         log("Stopped monitoring of socket: %s:%d [inode=%d]", inetAddress.toString(), port, inode);
     }
 
+    private void waitForMonitoringToStart() throws InterruptedException
+    {
+        final long timeoutAt = System.currentTimeMillis() + 5000L;
+        while(!Thread.currentThread().isInterrupted() &&
+                System.currentTimeMillis() < timeoutAt &&
+                monitoredSocketCount.get() < 3)
+        {
+            Thread.sleep(100L);
+        }
+        if(monitoredSocketCount.get() < 3)
+        {
+            throw new IllegalStateException("Sockets did not become available for monitoring!");
+        }
+    }
 
     public static void main(final String[] args) throws Exception
     {
@@ -152,7 +171,7 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
 
     private static DatagramChannel createListeningChannelOnPort(final InetSocketAddress local) throws IOException
     {
-        return DatagramChannel.open().
+        return DatagramChannel.open(StandardProtocolFamily.INET).
                 setOption(StandardSocketOptions.SO_REUSEADDR, true).
                 setOption(StandardSocketOptions.SO_RCVBUF, 4096).
                 bind(local);
