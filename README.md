@@ -4,6 +4,8 @@ Angler is a utility for monitoring the performance of inbound UDP message-proces
 
 Currently, Angler only supports IPv4 sockets.
 
+[![Build Status](https://travis-ci.org/epickrram/angler.svg)](https://travis-ci.org/epickrram/angler)
+
 ### Maintainer
 
 [Mark Price](https://github.com/epickrram)
