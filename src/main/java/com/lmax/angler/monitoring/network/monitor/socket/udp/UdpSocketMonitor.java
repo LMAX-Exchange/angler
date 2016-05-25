@@ -96,12 +96,26 @@ public final class UdpSocketMonitor
         endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4SocketAddress(socketAddress));
     }
 
+    /**
+     * Register interest in sockets listening to the specified address on any port.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param inetAddress the IP address
+     */
     public void beginMonitoringOf(final InetAddress inetAddress)
     {
         final long socketIdentifier = SocketIdentifier.fromInet4Address(inetAddress);
         beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
     }
 
+    /**
+     * De-register interest in an IP address.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param inetAddress the IP address
+     */
     public void endMonitoringOf(final InetAddress inetAddress)
     {
         endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
