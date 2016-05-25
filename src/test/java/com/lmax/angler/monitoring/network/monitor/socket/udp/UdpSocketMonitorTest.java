@@ -146,7 +146,7 @@ public class UdpSocketMonitorTest
     }
 
     @Test
-    public void shouldIpAddressWhoseFirstOctetJavaSignedByteValueIsNegative() throws Exception
+    public void shouldMonitorIpAddressWhoseFirstOctetJavaSignedByteValueIsNegative() throws Exception
     {
         monitor.beginMonitoringOf(getSocketAddress("239.168.122.1", 53));
         monitor.poll(recordingUdpSocketStatisticsHandler);
@@ -158,6 +158,17 @@ public class UdpSocketMonitorTest
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(1));
         assertEntry(recordedEntries.get(0), "239.168.122.1", 53, 166, 0, 15292);
+    }
+
+    @Test
+    public void shouldMonitorIpAddressOnLocalhost() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("127.0.0.1", 32770));
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
+        assertThat(recordedEntries.size(), is(1));
+        assertEntry(recordedEntries.get(0), "127.0.0.1", 32770, 0, 0, 15293);
     }
 
     private static void assertEntry(final MonitoredEntry monitoredEntry,
