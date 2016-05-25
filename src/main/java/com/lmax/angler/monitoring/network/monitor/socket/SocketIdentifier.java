@@ -99,7 +99,7 @@ public final class SocketIdentifier
         if(!(address instanceof Inet4Address))
         {
             throw new IllegalArgumentException("Due to the nature of some awful hacks, " +
-                    "I only work with Inet4Address-based sockets");
+                    "I only work with Inet4Address-based sockets, not: " + address.getClass().getSimpleName());
         }
     }
 }

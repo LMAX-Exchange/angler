@@ -11,12 +11,16 @@ import com.lmax.angler.monitoring.network.monitor.system.softnet.SoftnetStatsMon
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Enumeration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -35,11 +39,13 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     private void run() throws Exception
     {
         try(final DatagramChannel c0 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLocalHost(), 32769));
-            final DatagramChannel c1 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLocalHost(), 32770)))
+            final DatagramChannel c1 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLocalHost(), 32770));
+            final DatagramChannel c2 = multicastListener(InetAddress.getByName("239.192.45.3"), 5000))
         {
             Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::pollMonitors, 0L, 1L, TimeUnit.SECONDS);
             udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c0.getLocalAddress());
             udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c1.getLocalAddress());
+            udpSocketMonitor.beginMonitoringOf((InetSocketAddress) c2.getLocalAddress());
 
             Thread.sleep(TimeUnit.SECONDS.toMillis(1L));
 
@@ -132,11 +138,38 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
         }
     }
 
+    private static DatagramChannel multicastListener(final InetAddress address, final int port) throws IOException
+    {
+        final NetworkInterface networkInterface = getMulticastCapableNetworkInterface();
+        final DatagramChannel channel = DatagramChannel.open(StandardProtocolFamily.INET);
+        channel.bind(new InetSocketAddress(port));
+        channel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
+        channel.setOption(StandardSocketOptions.IP_MULTICAST_IF, networkInterface);
+        channel.join(address, networkInterface);
+
+        return channel;
+    }
+
     private static DatagramChannel createListeningChannelOnPort(final InetSocketAddress local) throws IOException
     {
         return DatagramChannel.open().
                 setOption(StandardSocketOptions.SO_REUSEADDR, true).
                 setOption(StandardSocketOptions.SO_RCVBUF, 4096).
                 bind(local);
+    }
+
+    private static NetworkInterface getMulticastCapableNetworkInterface() throws SocketException
+    {
+        final Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+        while(networkInterfaces.hasMoreElements())
+        {
+            final NetworkInterface networkInterface = networkInterfaces.nextElement();
+            if(networkInterface.supportsMulticast())
+            {
+                return networkInterface;
+            }
+        }
+
+        throw new IllegalStateException("Unable to find multicast-capable interface");
     }
 }
