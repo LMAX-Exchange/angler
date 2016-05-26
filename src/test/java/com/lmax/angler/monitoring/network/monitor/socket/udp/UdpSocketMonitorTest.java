@@ -12,20 +12,25 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class UdpSocketMonitorTest
+public abstract class UdpSocketMonitorTest<T>
 {
-    private final RecordingUdpSocketStatisticsHandler recordingUdpSocketStatisticsHandler =
+    protected final RecordingUdpSocketStatisticsHandler recordingUdpSocketStatisticsHandler =
             new RecordingUdpSocketStatisticsHandler();
-    private final RecordingUdpSocketMonitoringLifecycleListener lifecycleListener =
+    protected final RecordingUdpSocketMonitoringLifecycleListener lifecycleListener =
             new RecordingUdpSocketMonitoringLifecycleListener();
     private Path inputPath;
-    private UdpSocketMonitor monitor;
+    protected UdpSocketMonitor monitor;
+
+    protected abstract Consumer<T> getBeginMonitoringRequestMethod();
+    protected abstract Consumer<T> getEndMonitoringRequestMethod();
+    protected abstract Collection<T> requestSpecFor(final InetSocketAddress... request);
 
     @Before
     public void before() throws Exception
@@ -44,9 +49,11 @@ public class UdpSocketMonitorTest
     @Test
     public void shouldSampleMonitoredSockets() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
-        monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        beginMonitoring(requestSpecFor(
+                getSocketAddress("0.0.0.0", 20048),
+                getSocketAddress("0.0.0.0", 56150),
+                getSocketAddress("192.168.122.1", 53)));
+
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
@@ -59,9 +66,11 @@ public class UdpSocketMonitorTest
     @Test
     public void shouldNotNotifyHandlerOfUnchangedEntries() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
-        monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        beginMonitoring(requestSpecFor(
+                getSocketAddress("0.0.0.0", 20048),
+                getSocketAddress("0.0.0.0", 56150),
+                getSocketAddress("192.168.122.1", 53)));
+
         monitor.poll(recordingUdpSocketStatisticsHandler);
         recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
 
@@ -76,30 +85,19 @@ public class UdpSocketMonitorTest
     }
 
     @Test
-    public void shouldAllowTrackingOfAllSocketsForSpecifiedIpAddress() throws Exception
-    {
-        monitor.beginMonitoringOf(Inet4Address.getByName("0.0.0.0"));
-
-        monitor.poll(recordingUdpSocketStatisticsHandler);
-
-        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
-        assertThat(recordedEntries.size(), is(2));
-        assertEntry(recordedEntries.get(0), "0.0.0.0", 20048, 0, 0, 21682);
-        assertEntry(recordedEntries.get(1), "0.0.0.0", 56150, 0, 4, 13597);
-    }
-
-    @Test
     public void shouldNotNotifyHandlerOfChangeWhenSocketIsNoLongerMonitored() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
-        monitor.beginMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        beginMonitoring(requestSpecFor(
+                getSocketAddress("0.0.0.0", 20048),
+                getSocketAddress("0.0.0.0", 56150),
+                getSocketAddress("192.168.122.1", 53)));
+
         monitor.poll(recordingUdpSocketStatisticsHandler);
         recordingUdpSocketStatisticsHandler.getRecordedEntries().clear();
 
         ResourceUtil.writeDataFile("proc_net_udp_updated_sample.txt", inputPath);
 
-        monitor.endMonitoringOf(getSocketAddress("192.168.122.1", 53));
+        endMonitoring(requestSpecFor(getSocketAddress("192.168.122.1", 53)));
 
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
@@ -109,31 +107,9 @@ public class UdpSocketMonitorTest
     }
 
     @Test
-    public void shouldNotifyLifecycleListener() throws Exception
-    {
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 56150));
-
-        monitor.poll(recordingUdpSocketStatisticsHandler);
-
-        monitor.endMonitoringOf(getSocketAddress("0.0.0.0", 56150));
-
-        monitor.poll(recordingUdpSocketStatisticsHandler);
-
-        final List<InetSocketAddress> monitoringStartedList = lifecycleListener.getMonitoringStartedList();
-        assertThat(monitoringStartedList.size(), is(2));
-        assertThat(monitoringStartedList.get(0), is(getSocketAddress("0.0.0.0", 20048)));
-        assertThat(monitoringStartedList.get(1), is(getSocketAddress("0.0.0.0", 56150)));
-
-        final List<InetSocketAddress> monitoringStoppedList = lifecycleListener.getMonitoringStoppedList();
-        assertThat(monitoringStoppedList.size(), is(1));
-        assertThat(monitoringStoppedList.get(0), is(getSocketAddress("0.0.0.0", 56150)));
-    }
-
-    @Test
     public void shouldNotifyLifecycleListenerWhenMonitoredSocketBecomesUnavailable() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("0.0.0.0", 20048));
+        beginMonitoring(requestSpecFor(getSocketAddress("0.0.0.0", 20048)));
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
         ResourceUtil.writeDataFile("proc_net_udp_socket_removed_sample.txt", inputPath);
@@ -148,7 +124,7 @@ public class UdpSocketMonitorTest
     @Test
     public void shouldMonitorIpAddressWhoseFirstOctetJavaSignedByteValueIsNegative() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("239.168.122.1", 53));
+        beginMonitoring(requestSpecFor(getSocketAddress("239.168.122.1", 53)));
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
         ResourceUtil.writeDataFile("proc_net_udp_signed_first_octet_sample.txt", inputPath);
@@ -163,7 +139,7 @@ public class UdpSocketMonitorTest
     @Test
     public void shouldMonitorIpAddressOnLocalhost() throws Exception
     {
-        monitor.beginMonitoringOf(getSocketAddress("127.0.0.1", 32770));
+        beginMonitoring(requestSpecFor(getSocketAddress("127.0.0.1", 32770)));
         monitor.poll(recordingUdpSocketStatisticsHandler);
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
@@ -187,107 +163,19 @@ public class UdpSocketMonitorTest
         assertThat(monitoredEntry.getSocketAddress(), is(new InetSocketAddress(address, port)));
     }
 
-    private InetSocketAddress getSocketAddress(final String host, final int port) throws UnknownHostException
+    InetSocketAddress getSocketAddress(final String host, final int port) throws UnknownHostException
     {
         return new InetSocketAddress(InetAddress.getByName(host), port);
     }
 
-    private static class RecordingUdpSocketMonitoringLifecycleListener implements UdpSocketMonitoringLifecycleListener
+    void beginMonitoring(final Collection<T> requestSpec)
     {
-        private final List<InetSocketAddress> monitoringStartedList = new ArrayList<>();
-        private final List<InetSocketAddress> monitoringStoppedList = new ArrayList<>();
-
-        @Override
-        public void socketMonitoringStarted(final InetAddress inetAddress, final int port, final long inode)
-        {
-            monitoringStartedList.add(new InetSocketAddress(inetAddress, port));
-        }
-
-        @Override
-        public void socketMonitoringStopped(final InetAddress inetAddress, final int port, final long inode)
-        {
-            monitoringStoppedList.add(new InetSocketAddress(inetAddress, port));
-        }
-
-        List<InetSocketAddress> getMonitoringStartedList()
-        {
-            return monitoringStartedList;
-        }
-
-        List<InetSocketAddress> getMonitoringStoppedList()
-        {
-            return monitoringStoppedList;
-        }
+        requestSpec.stream().forEach(getBeginMonitoringRequestMethod());
     }
 
-    private static class RecordingUdpSocketStatisticsHandler implements UdpSocketStatisticsHandler
+    void endMonitoring(final Collection<T> requestSpec)
     {
-        private final List<MonitoredEntry> recordedEntries = new ArrayList<>();
-
-        @Override
-        public void onStatisticsUpdated(final InetAddress inetAddress,
-                                        final int port,
-                                        final long socketIdentifier,
-                                        final long inode,
-                                        final long receiveQueueDepth,
-                                        final long drops)
-        {
-            recordedEntries.add(new MonitoredEntry(inetAddress, port, socketIdentifier, inode, receiveQueueDepth, drops));
-        }
-
-        List<MonitoredEntry> getRecordedEntries()
-        {
-            return recordedEntries;
-        }
-    }
-
-    private static final class MonitoredEntry
-    {
-        private final InetSocketAddress socketAddress;
-        private final long socketIdentifier;
-        private final long inode;
-        private final long receiverQueueDepth;
-        private final long drops;
-
-        MonitoredEntry(
-                final InetAddress inetAddress,
-                final int port,
-                final long socketIdentifier,
-                final long inode,
-                final long receiverQueueDepth,
-                final long drops)
-        {
-            this.socketAddress = new InetSocketAddress(inetAddress, port);
-            this.socketIdentifier = socketIdentifier;
-            this.inode = inode;
-            this.receiverQueueDepth = receiverQueueDepth;
-            this.drops = drops;
-        }
-
-        InetSocketAddress getSocketAddress()
-        {
-            return socketAddress;
-        }
-
-        long getSocketIdentifier()
-        {
-            return socketIdentifier;
-        }
-
-        long getReceiverQueueDepth()
-        {
-            return receiverQueueDepth;
-        }
-
-        long getDrops()
-        {
-            return drops;
-        }
-
-        long getInode()
-        {
-            return inode;
-        }
+        requestSpec.stream().forEach(getEndMonitoringRequestMethod());
     }
 
     private static String extractHostIpAddress(final long socketIdentifier) throws UnknownHostException
