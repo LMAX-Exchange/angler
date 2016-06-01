@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -24,40 +23,10 @@ public final class FileLoader
     }
 
     /**
-     * Opens a channel to the specified path if it does not already exist.
-     * Allocates a larger ByteBuffer if file size &gt; current buffer size.
-     * Reads file data into ByteBuffer.
-     */
-    public void load()
-    {
-        try
-        {
-            if (fileChannel == null)
-            {
-                fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-            }
-            final long fileSize = Files.size(path);
-
-            if (fileSize > buffer.capacity())
-            {
-                buffer = ByteBuffer.allocateDirect((int) Math.max(buffer.capacity() * 2, fileSize));
-            }
-
-            buffer.clear();
-            fileChannel.read(buffer, 0);
-            buffer.flip();
-        }
-        catch(final IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    /**
-     * Visit the data within the specified path, passing it to
+     * Visit the data contained within the specified path, passing it to
      * the supplied file handler as it is seen.
      */
-    public void run(FileHandler fileHandler)
+    public void run(final FileHandler fileHandler)
     {
         try
         {
@@ -85,10 +54,5 @@ public final class FileLoader
         {
             throw new UncheckedIOException(e);
         }
-    }
-
-    public ByteBuffer getBuffer()
-    {
-        return buffer;
     }
 }

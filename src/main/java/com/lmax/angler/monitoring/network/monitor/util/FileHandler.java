@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public interface FileHandler
 {
-    void handleData(ByteBuffer src, int startPosition, int endPosition);
+    void handleData(final ByteBuffer src, final int startPosition, final int endPosition);
 
     void noFurtherData();
 }

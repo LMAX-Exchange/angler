@@ -1,14 +1,13 @@
 package com.lmax.angler.monitoring.network.monitor.system.softnet;
 
+import com.lmax.angler.monitoring.network.monitor.util.FileHandler;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
-import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
+import com.lmax.angler.monitoring.network.monitor.util.Parsers;
 import org.agrona.collections.Int2ObjectHashMap;
 
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.lmax.angler.monitoring.network.monitor.util.Parsers.rowColumnParser;
 import static java.lang.Runtime.getRuntime;
 
 /**
@@ -20,7 +19,7 @@ public final class SoftnetStatsMonitor
     private static final int ESTIMATED_LINE_LENGTH = 120;
 
     private final Int2ObjectHashMap<CpuSoftIrqData> cpuSoftIrqDataMap = new Int2ObjectHashMap<>();
-    private final TokenHandler lineParser = rowColumnParser(new SoftnetStatColumnHandler(this::handleEntry));
+    private final FileHandler lineParser = Parsers.rowColumnHandler(new SoftnetStatColumnHandler(this::handleEntry));
     private final FileLoader fileLoader;
 
     private SoftnetStatsHandler softnetStatsHandler;
@@ -48,12 +47,8 @@ public final class SoftnetStatsMonitor
         this.softnetStatsHandler = softnetStatsHandler;
         try
         {
-            fileLoader.load();
-            final ByteBuffer buffer = fileLoader.getBuffer();
-
             cpuId = 0;
-            lineParser.reset();
-            lineParser.handleToken(buffer, buffer.position(), buffer.limit());
+            fileLoader.run(lineParser);
         }
         finally
         {

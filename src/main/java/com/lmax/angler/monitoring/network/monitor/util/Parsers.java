@@ -4,17 +4,18 @@ public final class Parsers
 {
     private static final byte COLUMN_DELIMITER = (byte) ' ';
     private static final byte ROW_DELIMITER = (byte) '\n';
+    private static final int MAXIMUM_LINE_LENGTH = 1024;
 
-    public static TokenHandler rowColumnParser(
-            TokenHandler tokenHandler)
+    public static FileHandler rowColumnHandler(
+            final TokenHandler tokenHandler)
     {
-        return new DelimitedDataParser(
+        return new TokenParser(
                 new DelimitedDataParser(
                         tokenHandler,
-                        COLUMN_DELIMITER,
-                        true),
+                        COLUMN_DELIMITER
+                ),
                 ROW_DELIMITER,
-                true);
+                MAXIMUM_LINE_LENGTH);
     }
 
     private Parsers() {}

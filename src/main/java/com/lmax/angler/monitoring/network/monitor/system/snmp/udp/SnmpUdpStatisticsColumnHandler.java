@@ -78,9 +78,4 @@ public final class SnmpUdpStatisticsColumnHandler implements TokenHandler
         entry.reset();
     }
 
-    @Override
-    public void reset()
-    {
-        currentColumn = 0;
-    }
 }

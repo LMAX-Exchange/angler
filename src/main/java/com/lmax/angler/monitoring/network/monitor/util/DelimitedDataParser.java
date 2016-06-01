@@ -9,16 +9,13 @@ final class DelimitedDataParser implements TokenHandler
 {
     private final TokenHandler tokenHandler;
     private final byte delimiter;
-    private final boolean skipConsecutiveDelimiters;
 
     DelimitedDataParser(
             final TokenHandler tokenHandler,
-            final byte delimiter,
-            final boolean skipConsecutiveDelimiters)
+            final byte delimiter)
     {
         this.tokenHandler = tokenHandler;
         this.delimiter = delimiter;
-        this.skipConsecutiveDelimiters = skipConsecutiveDelimiters;
     }
 
     /**
@@ -53,7 +50,6 @@ final class DelimitedDataParser implements TokenHandler
             currentPosition += 1;
 
             while(
-                    skipConsecutiveDelimiters &&
                     currentPosition < endPosition &&
                     src.get(currentPosition) == delimiter)
             {
@@ -64,15 +60,6 @@ final class DelimitedDataParser implements TokenHandler
         }
 
         tokenHandler.complete();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void reset()
-    {
-        tokenHandler.reset();
     }
 
     /**

@@ -2,11 +2,10 @@ package com.lmax.angler.monitoring.network.monitor.system.snmp;
 
 import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.SnmpUdpStatisticsColumnHandler;
 import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.SnmpUdpStatisticsHandler;
+import com.lmax.angler.monitoring.network.monitor.util.FileHandler;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
 import com.lmax.angler.monitoring.network.monitor.util.Parsers;
-import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -15,8 +14,8 @@ import java.nio.file.Paths;
  */
 public final class SystemNetworkManagementMonitor
 {
-    private final TokenHandler lineParser =
-            Parsers.rowColumnParser(new SnmpUdpStatisticsColumnHandler(this::onUpdate));
+    private final FileHandler lineParser =
+            Parsers.rowColumnHandler(new SnmpUdpStatisticsColumnHandler(this::onUpdate));
     private final FileLoader fileLoader;
     private SnmpUdpStatisticsHandler statisticsHandler;
 
@@ -42,11 +41,7 @@ public final class SystemNetworkManagementMonitor
         this.statisticsHandler = snmpUdpStatisticsHandler;
         try
         {
-            fileLoader.load();
-            final ByteBuffer buffer = fileLoader.getBuffer();
-
-            lineParser.reset();
-            lineParser.handleToken(buffer, buffer.position(), buffer.limit());
+            fileLoader.run(lineParser);
         }
         finally
         {
