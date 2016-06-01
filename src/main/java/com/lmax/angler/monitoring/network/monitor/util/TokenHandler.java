@@ -19,9 +19,4 @@ public interface TokenHandler
      * Current token set is complete.
      */
     void complete();
-
-    /**
-     * Reset state in preparation for handling a new data set.
-     */
-    void reset();
 }

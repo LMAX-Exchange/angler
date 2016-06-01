@@ -15,7 +15,7 @@ public final class DelimitedDataParserTest
 {
     private final List<String> collectedTokens = new ArrayList<>();
     private final TokenCollector collector = new TokenCollector(collectedTokens);
-    private final DelimitedDataParser parser = new DelimitedDataParser(collector, (byte) '\n', true);
+    private final DelimitedDataParser parser = new DelimitedDataParser(collector, (byte) '\n');
 
     @Test
     public void shouldFindZeroTokensWhenDataIsEmpty() throws Exception
@@ -86,8 +86,8 @@ public final class DelimitedDataParserTest
     public void shouldNest() throws Exception
     {
         final ByteBuffer src = bufferForData("\n\n 1st    line \n 2nd   line \n\n  3rd    line");
-        final DelimitedDataParser inner = new DelimitedDataParser(collector, (byte)'\n', true);
-        final DelimitedDataParser outer = new DelimitedDataParser(inner, (byte)' ', true);
+        final DelimitedDataParser inner = new DelimitedDataParser(collector, (byte)'\n');
+        final DelimitedDataParser outer = new DelimitedDataParser(inner, (byte)' ');
         outer.handleToken(src, src.position(), src.limit());
 
         assertThat(collectedTokens.size(), is(6));
@@ -97,39 +97,5 @@ public final class DelimitedDataParserTest
     private static ByteBuffer bufferForData(final String data)
     {
         return ByteBuffer.wrap(data.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static final class TokenCollector implements TokenHandler
-    {
-        private final List<String> collectedTokens;
-
-        private TokenCollector(final List<String> collectedTokens)
-        {
-            this.collectedTokens = collectedTokens;
-        }
-
-        @Override
-        public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
-        {
-            final byte[] tmp = new byte[endPosition - startPosition];
-            final int bufferPosition = src.position();
-            final int bufferLimit = src.limit();
-            src.position(startPosition).limit(endPosition);
-            src.get(tmp, 0, endPosition - startPosition);
-            src.position(bufferPosition).limit(bufferLimit);
-            collectedTokens.add(new String(tmp));
-        }
-
-        @Override
-        public void complete()
-        {
-
-        }
-
-        @Override
-        public void reset()
-        {
-
-        }
     }
 }

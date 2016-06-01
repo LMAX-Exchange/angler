@@ -71,10 +71,10 @@ public class SoftnetStatsMonitorTest
                                     final long dropped,
                                     final long timeSqueeze)
     {
-        assertThat(softnetStatEntry.getCpuId(), is(cpuId));
-        assertThat(softnetStatEntry.getProcessed(), is(total));
-        assertThat(softnetStatEntry.getDropped(), is(dropped));
-        assertThat(softnetStatEntry.getSqueezed(), is(timeSqueeze));
+        assertThat("cpuid", softnetStatEntry.getCpuId(), is(cpuId));
+        assertThat("processed", softnetStatEntry.getProcessed(), is(total));
+        assertThat("dropped", softnetStatEntry.getDropped(), is(dropped));
+        assertThat("squeezed", softnetStatEntry.getSqueezed(), is(timeSqueeze));
     }
 
     private static class RecordingSoftnetStatsHandler implements SoftnetStatsHandler

@@ -1,16 +1,15 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
+import com.lmax.angler.monitoring.network.monitor.util.FileHandler;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
 import com.lmax.angler.monitoring.network.monitor.util.Parsers;
-import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,7 +27,8 @@ public final class UdpSocketMonitor
 
     private final UdpSocketMonitoringLifecycleListener lifecycleListener;
     private final UdpColumnHandler tokenHandler = new UdpColumnHandler(this::handleEntry);
-    private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
+//    private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
+    private final FileHandler lineParser = Parsers.rowColumnHandler(tokenHandler);
 
     private final FileLoader fileLoader;
 
@@ -58,11 +58,7 @@ public final class UdpSocketMonitor
         this.statisticsHandler = handler;
         try
         {
-            fileLoader.load();
-            final ByteBuffer buffer = fileLoader.getBuffer();
-
-            lineParser.reset();
-            lineParser.handleToken(buffer, buffer.position(), buffer.limit());
+            fileLoader.run(lineParser);
         }
         finally
         {

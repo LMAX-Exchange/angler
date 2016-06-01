@@ -1,9 +1,9 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
-import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import com.lmax.angler.monitoring.network.monitor.util.AsciiBytesToLongDecoder;
 import com.lmax.angler.monitoring.network.monitor.util.HexToLongDecoder;
+import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 
 import java.nio.ByteBuffer;
 import java.util.function.Consumer;
@@ -87,9 +87,4 @@ final class UdpColumnHandler implements TokenHandler
         entry.reset();
     }
 
-    @Override
-    public void reset()
-    {
-        currentColumn = 0;
-    }
 }
