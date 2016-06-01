@@ -1,8 +1,9 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
-import com.lmax.angler.monitoring.network.monitor.util.DelimitedDataParser;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
+import com.lmax.angler.monitoring.network.monitor.util.Parsers;
+import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;
@@ -26,8 +27,9 @@ public final class UdpSocketMonitor
     private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
 
     private final UdpSocketMonitoringLifecycleListener lifecycleListener;
-    private final DelimitedDataParser columnParser = new DelimitedDataParser(new UdpColumnHandler(this::handleEntry), (byte)' ', true);
-    private final DelimitedDataParser lineParser = new DelimitedDataParser(columnParser, (byte)'\n', true);
+    private final UdpColumnHandler tokenHandler = new UdpColumnHandler(this::handleEntry);
+    private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
+
     private final FileLoader fileLoader;
 
     private UdpSocketStatisticsHandler statisticsHandler;

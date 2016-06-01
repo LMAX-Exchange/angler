@@ -1,13 +1,14 @@
 package com.lmax.angler.monitoring.network.monitor.system.softnet;
 
-import com.lmax.angler.monitoring.network.monitor.util.DelimitedDataParser;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
+import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import org.agrona.collections.Int2ObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.lmax.angler.monitoring.network.monitor.util.Parsers.rowColumnParser;
 import static java.lang.Runtime.getRuntime;
 
 /**
@@ -19,8 +20,7 @@ public final class SoftnetStatsMonitor
     private static final int ESTIMATED_LINE_LENGTH = 120;
 
     private final Int2ObjectHashMap<CpuSoftIrqData> cpuSoftIrqDataMap = new Int2ObjectHashMap<>();
-    private final DelimitedDataParser columnParser = new DelimitedDataParser(new SoftnetStatColumnHandler(this::handleEntry), (byte)' ', true);
-    private final DelimitedDataParser lineParser = new DelimitedDataParser(columnParser, (byte)'\n', true);
+    private final TokenHandler lineParser = rowColumnParser(new SoftnetStatColumnHandler(this::handleEntry));
     private final FileLoader fileLoader;
 
     private SoftnetStatsHandler softnetStatsHandler;

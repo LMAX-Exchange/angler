@@ -5,13 +5,13 @@ import java.nio.ByteBuffer;
 /**
  * Parser for delimited data.
  */
-public final class DelimitedDataParser implements TokenHandler
+final class DelimitedDataParser implements TokenHandler
 {
     private final TokenHandler tokenHandler;
     private final byte delimiter;
     private final boolean skipConsecutiveDelimiters;
 
-    public DelimitedDataParser(
+    DelimitedDataParser(
             final TokenHandler tokenHandler,
             final byte delimiter,
             final boolean skipConsecutiveDelimiters)
@@ -24,6 +24,7 @@ public final class DelimitedDataParser implements TokenHandler
     /**
      * {@inheritDoc}
      */
+    @Override
     public void handleToken(final ByteBuffer src, final int startPosition, final int endPosition)
     {
         int currentPosition = startPosition;
@@ -68,6 +69,7 @@ public final class DelimitedDataParser implements TokenHandler
     /**
      * {@inheritDoc}
      */
+    @Override
     public void reset()
     {
         tokenHandler.reset();
@@ -76,6 +78,7 @@ public final class DelimitedDataParser implements TokenHandler
     /**
      * {@inheritDoc}
      */
+    @Override
     public void complete()
     {
         tokenHandler.complete();
