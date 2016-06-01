@@ -88,7 +88,7 @@ public class FileLoaderTest
             final byte[] bytes = new byte[endPosition - startPosition];
             for (int i = 0; i < bytes.length; i++)
             {
-                bytes[i] = src.get(i);
+                bytes[i] = src.get(startPosition + i);
             }
             seenStrings.add(new String(bytes, StandardCharsets.US_ASCII));
         }
