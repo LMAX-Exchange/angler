@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -14,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 public final class FileLoader
 {
     private final Path path;
+    private final ByteBuffer tmp = ByteBuffer.allocateDirect(4096);
     private ByteBuffer buffer;
     private FileChannel fileChannel;
 
@@ -36,15 +36,23 @@ public final class FileLoader
             {
                 fileChannel = FileChannel.open(path, StandardOpenOption.READ);
             }
-            final long fileSize = Files.size(path);
 
-            if (fileSize > buffer.capacity())
+            fileChannel.position(0L);
+            tmp.clear();
+            while(fileChannel.read(tmp) > 0)
             {
-                buffer = ByteBuffer.allocateDirect((int) Math.max(buffer.capacity() * 2, fileSize));
+                tmp.flip();
+                if(tmp.remaining() > buffer.capacity() - buffer.position())
+                {
+                    final ByteBuffer next = ByteBuffer.allocateDirect(Math.max(buffer.capacity() * 2, tmp.remaining()));
+                    buffer.flip();
+                    next.put(buffer);
+                    buffer = next;
+                }
+                buffer.put(tmp);
+                tmp.clear();
             }
 
-            buffer.clear();
-            fileChannel.read(buffer, 0);
             buffer.flip();
         }
         catch(final IOException e)
@@ -57,7 +65,7 @@ public final class FileLoader
      * Visit the data within the specified path, passing it to
      * the supplied file handler as it is seen.
      */
-    public void run(FileHandler fileHandler)
+    public void run(final FileHandler fileHandler)
     {
         try
         {

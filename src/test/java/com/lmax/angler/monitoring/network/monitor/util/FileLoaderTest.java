@@ -34,6 +34,17 @@ public class FileLoaderTest
     }
 
     @Test
+    public void loadReadsEntireFile() throws Exception
+    {
+        writeData(LONG_FILE);
+
+        final FileLoader fileLoader = new FileLoader(inputPath, 128);
+        fileLoader.load();
+
+        assertThat(fileLoader.getBuffer().remaining(), is((int)(Files.size(inputPath))));
+    }
+
+    @Test
     public void fileLongerThanBufferSizeIsChunked() throws IOException, URISyntaxException
     {
         writeData(LONG_FILE);
