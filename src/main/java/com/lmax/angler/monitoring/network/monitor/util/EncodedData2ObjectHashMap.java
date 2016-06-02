@@ -55,6 +55,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean containsKey(final Object key)
     {
         final K typedKey = (K) key;
@@ -85,6 +86,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public V get(final Object key)
     {
         final K typedKey = (K) key;
@@ -99,6 +101,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public V put(final K key, final V value)
     {
         final int keySpaceIndex = getKeySpaceIndex(key);
