@@ -10,7 +10,7 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
-version = new Version(major: 1, minor: 0, revision: 2)
+version = new Version(major: 1, minor: 0, revision: 3)
 
 sourceSets {
     main {
@@ -41,7 +41,7 @@ artifacts {
 
 
 class Version {
-    int major = 1, minor = 0, revision = 2
+    int major = 1, minor = 0, revision = 3
 
     String toString() {
         "$major.$minor.$revision"
