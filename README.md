@@ -2,8 +2,6 @@
 
 Angler is a utility for monitoring the performance of inbound UDP message-processing in the Linux kernel.
 
-Currently, Angler only supports IPv4 sockets.
-
 [![Build Status](https://travis-ci.org/epickrram/angler.svg)](https://travis-ci.org/epickrram/angler)
 
 ### Maintainer
@@ -93,6 +91,12 @@ Angler will not generate garbage once in a steady-state.
 
 Adding and removing sockets from the monitored set will cause allocation.
 Large changes in the number of active UDP sockets on the system will cause one-time allocation of a larger read-buffer for `/proc/net/udp`.
+
+
+## Road map
+
+*   Report relevant TCP statistics
+*   Support IPv6 sockets
 
 
 ## Change log
