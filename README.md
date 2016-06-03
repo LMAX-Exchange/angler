@@ -97,6 +97,11 @@ Large changes in the number of active UDP sockets on the system will cause one-t
 
 ## Change log
 
+### 1.0.3
+
+   * Bugfixes to file handling routines
+
+
 ### 1.0.2
 
    * Upgrade to Agrona 0.5.1
