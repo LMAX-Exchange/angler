@@ -61,40 +61,6 @@ public final class FileLoader
         }
     }
 
-    /**
-     * Visit the data within the specified path, passing it to
-     * the supplied file handler as it is seen.
-     */
-    public void run(final FileHandler fileHandler)
-    {
-        try
-        {
-            if (fileChannel == null)
-            {
-                fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-            }
-            else
-            {
-                fileChannel.position(0);
-            }
-
-            int read = fileChannel.read(buffer);
-            while (read > 0)
-            {
-                buffer.flip();
-                fileHandler.handleData(buffer, 0, read);
-                buffer.clear();
-
-                read = fileChannel.read(buffer);
-            }
-            fileHandler.noFurtherData();
-        }
-        catch (IOException e)
-        {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     public ByteBuffer getBuffer()
     {
         return buffer;
