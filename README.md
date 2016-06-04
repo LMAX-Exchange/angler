@@ -2,7 +2,7 @@
 
 Angler is a utility for monitoring the performance of inbound UDP message-processing in the Linux kernel.
 
-[![Build Status](https://travis-ci.org/epickrram/angler.svg)](https://travis-ci.org/epickrram/angler)
+[![Build Status](https://travis-ci.org/LMAX-Exchange/angler.svg)](https://travis-ci.org/LMAX-Exchange/angler)
 
 ### Maintainer
 
