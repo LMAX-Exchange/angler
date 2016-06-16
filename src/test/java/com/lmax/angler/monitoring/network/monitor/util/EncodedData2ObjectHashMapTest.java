@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -59,7 +58,6 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.get(KEY), is(nullValue()));
     }
 
-    @Ignore(value = "work in progress")
     @Test
     public void shouldHandleHashCollision() throws Exception
     {
