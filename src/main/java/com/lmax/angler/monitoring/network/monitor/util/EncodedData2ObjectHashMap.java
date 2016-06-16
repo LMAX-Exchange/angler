@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.ToIntBiFunction;
 
 /**
  * Primarily copied from Agrona Long2ObjectHashMap, with scope for arbitrarily long keys.
@@ -23,6 +24,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     private final ByteBuffer nullKeyBuffer;
     private final float loadFactor;
     private final BiConsumer<K, ByteBuffer> keyEncoder;
+    private final ToIntBiFunction<K, ByteBuffer> hashFunction;
 
     private ByteBuffer keySpace;
     private Object[] values;
@@ -43,6 +45,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         this.keyEncoder = keyEncoder;
         this.keySpace = ByteBuffer.allocate(keyLengthInBytes * capacity);
         this.values = new Object[capacity];
+        this.hashFunction = this::defaultHash;
     }
 
     @Override
@@ -135,15 +138,21 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         }
 
         keyBuffer.flip();
+        final int hashCode = defaultHash(key, keyBuffer);
+        keyBuffer.rewind();
+
+        return (hashCode & capacity - 1);
+    }
+
+    private int defaultHash(final K key, final ByteBuffer keyBuffer)
+    {
         int hashCode = 0;
         while(keyBuffer.remaining() > 3)
         {
             int keyPart = keyBuffer.getInt();
             hashCode ^= keyPart ^ (keyPart >>> 16);
         }
-        keyBuffer.rewind();
-
-        return (hashCode & capacity - 1);
+        return hashCode;
     }
 
     @Override

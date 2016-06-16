@@ -48,6 +48,16 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.get(KEY), is(nullValue()));
     }
 
+    @Test
+    public void shouldReturnNullIfRemovedKeyIsNotPresent() throws Exception
+    {
+        final String removed = map.remove(KEY);
+
+        assertThat(removed, is(nullValue()));
+        assertThat(map.containsKey(KEY), is(false));
+        assertThat(map.get(KEY), is(nullValue()));
+    }
+
     private static final class EncodableKey
     {
         private long value;
