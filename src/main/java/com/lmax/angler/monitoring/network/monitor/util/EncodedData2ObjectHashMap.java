@@ -20,6 +20,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
 {
     private final int keyLengthInBytes;
     private final ByteBuffer keyBuffer;
+    private final ByteBuffer nullKeyBuffer;
     private final float loadFactor;
     private final BiConsumer<K, ByteBuffer> keyEncoder;
 
@@ -38,6 +39,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         this.loadFactor = loadFactor;
         this.keyLengthInBytes = keyLengthInBytes;
         this.keyBuffer = ByteBuffer.allocate(keyLengthInBytes);
+        this.nullKeyBuffer = ByteBuffer.allocate(keyLengthInBytes);
         this.keyEncoder = keyEncoder;
         this.keySpace = ByteBuffer.allocate(keyLengthInBytes * capacity);
         this.values = new Object[capacity];
@@ -114,6 +116,14 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return previous;
     }
 
+    private void removeKeyAtIndex(final int keySpaceIndex)
+    {
+        nullKeyBuffer.clear();
+        keySpace.position(keySpaceIndex * keyLengthInBytes);
+        // TODO need nullKey + hash check, or separate empty index indicator
+        keySpace.put(nullKeyBuffer);
+    }
+
     private int getKeySpaceIndex(final K key)
     {
         keyBuffer.clear();
@@ -139,8 +149,22 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @Override
     public V remove(final Object key)
     {
+        final K typedKey = (K) key;
+        final int keySpaceIndex = getKeySpaceIndex(typedKey);
+
+        if(keyIsAtIndex(typedKey, keySpaceIndex))
+        {
+            final V existingValue = (V) values[keySpaceIndex];
+            values[keySpaceIndex] = null;
+            removeKeyAtIndex(keySpaceIndex);
+            return existingValue;
+
+        }
+
         return null;
     }
+
+
 
     @Override
     public void putAll(final Map<? extends K, ? extends V> m)
