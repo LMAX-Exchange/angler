@@ -35,7 +35,8 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             final int initialCapacity,
             final float loadFactor,
             final int keyLengthInBytes,
-            final BiConsumer<K, ByteBuffer> keyEncoder)
+            final BiConsumer<K, ByteBuffer> keyEncoder,
+            final ToIntBiFunction<K, ByteBuffer> hashFunction)
     {
         this.capacity = BitUtil.findNextPositivePowerOfTwo(initialCapacity);
         this.loadFactor = loadFactor;
@@ -45,7 +46,16 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         this.keyEncoder = keyEncoder;
         this.keySpace = ByteBuffer.allocate(keyLengthInBytes * capacity);
         this.values = new Object[capacity];
-        this.hashFunction = this::defaultHash;
+        this.hashFunction = hashFunction;
+    }
+
+    public EncodedData2ObjectHashMap(
+            final int initialCapacity,
+            final float loadFactor,
+            final int keyLengthInBytes,
+            final BiConsumer<K, ByteBuffer> keyEncoder)
+    {
+        this(initialCapacity, loadFactor, keyLengthInBytes, keyEncoder, EncodedData2ObjectHashMap::defaultHash);
     }
 
     @Override
@@ -138,13 +148,13 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         }
 
         keyBuffer.flip();
-        final int hashCode = defaultHash(key, keyBuffer);
+        final int hashCode = hashFunction.applyAsInt(key, keyBuffer);
         keyBuffer.rewind();
 
         return (hashCode & capacity - 1);
     }
 
-    private int defaultHash(final K key, final ByteBuffer keyBuffer)
+    private static <K> int defaultHash(final K key, final ByteBuffer keyBuffer)
     {
         int hashCode = 0;
         while(keyBuffer.remaining() > 3)

@@ -1,5 +1,6 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -56,6 +57,26 @@ public class EncodedData2ObjectHashMapTest
         assertThat(removed, is(nullValue()));
         assertThat(map.containsKey(KEY), is(false));
         assertThat(map.get(KEY), is(nullValue()));
+    }
+
+    @Ignore(value = "work in progress")
+    @Test
+    public void shouldHandleHashCollision() throws Exception
+    {
+        final EncodedData2ObjectHashMap<EncodableKey, String> map =
+                new EncodedData2ObjectHashMap<>(16, 1f, 8, this::encodeKey, (k, buffer) -> 42);
+
+        final EncodableKey otherKey = new EncodableKey(37L);
+        final String otherValue = "other";
+
+        map.put(KEY, VALUE);
+        map.put(otherKey, otherValue);
+
+        assertThat(map.containsKey(KEY), is(true));
+        assertThat(map.get(KEY), is(VALUE));
+
+        assertThat(map.containsKey(otherKey), is(true));
+        assertThat(map.get(otherKey), is(otherValue));
     }
 
     private static final class EncodableKey
