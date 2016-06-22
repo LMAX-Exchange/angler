@@ -1,8 +1,28 @@
 apply plugin: 'java'
 apply plugin: 'checkstyle'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group = 'com.lmax'
+
+
+ext {
+    fullName = 'Angler'
+    fullDescription = 'A utility for monitoring Linux kernel network statistics'
+    teamName = 'LMAX Development Team'
+    siteUrl = 'http://github.com/LMAX-Exchange/angler'
+    sourceUrl = 'git@github.com:LMAX-Exchange/angler'
+
+    javaCompilerExecutable = System.env['JAVA_HOME'] ? System.env['JAVA_HOME'] + '/bin/javac' : 'javac'
+
+    if (!project.hasProperty('sonatypeUrl')) sonatypeUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+    if (!project.hasProperty('sonatypeUsername')) sonatypeUsername = ''
+    if (!project.hasProperty('sonatypePassword')) sonatypePassword = ''
+}
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -40,6 +60,8 @@ artifacts {
 }
 
 
+
+
 class Version {
     int major = 1, minor = 0, revision = 3
 
@@ -50,4 +72,53 @@ class Version {
 
 checkstyle {
     toolVersion = 6.3
+}
+
+
+def projectPom = {
+    name = fullName
+    description = fullDescription
+    url = siteUrl
+
+    scm {
+        url = "scm:$sourceUrl"
+        connection = "scm:$sourceUrl"
+    }
+
+    licenses {
+        license {
+            name = 'The Apache Software License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            distribution = 'repo'
+        }
+    }
+
+    developers {
+        developer {
+            id = 'team'
+            name = teamName
+            email = 'lmax-angler@googlegroups.com'
+        }
+    }
+}
+
+install {
+    repositories.mavenInstaller.pom.project(projectPom)
+}
+
+signing {
+    required { gradle.taskGraph.hasTask('uploadArchives') }
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories.mavenDeployer {
+        beforeDeployment { deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeUrl) {
+            authentication(userName: sonatypeUsername, password: sonatypePassword)
+        }
+
+        pom.project(projectPom)
+    }
 }
