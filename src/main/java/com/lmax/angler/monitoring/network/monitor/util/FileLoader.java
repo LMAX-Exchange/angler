@@ -38,6 +38,7 @@ public final class FileLoader
             }
 
             fileChannel.position(0L);
+            buffer.clear();
             tmp.clear();
             while(fileChannel.read(tmp) > 0)
             {
