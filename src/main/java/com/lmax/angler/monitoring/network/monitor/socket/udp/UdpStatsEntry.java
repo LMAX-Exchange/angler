@@ -72,6 +72,7 @@ final class UdpStatsEntry
     {
         socketIdentifier = 0L;
         receiveQueueDepth = 0L;
+        transmitQueueDepth = 0L;
         drops = 0L;
         inode = 0L;
     }
