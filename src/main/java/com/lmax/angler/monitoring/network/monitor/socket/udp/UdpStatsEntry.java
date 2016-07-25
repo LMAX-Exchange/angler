@@ -5,7 +5,7 @@ import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 /**
  * Value object.
  */
-final class BufferStatsEntry
+final class UdpStatsEntry
 {
     private long socketIdentifier;
     private long receiveQueueDepth;
