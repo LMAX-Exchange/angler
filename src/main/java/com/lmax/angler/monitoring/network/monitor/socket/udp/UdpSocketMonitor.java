@@ -123,7 +123,7 @@ public final class UdpSocketMonitor
         endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
     }
 
-    private void handleEntry(final BufferStatsEntry entry)
+    private void handleEntry(final UdpStatsEntry entry)
     {
         final long socketIdentifier = entry.getSocketIdentifier();
         final long matchAllPortsSocketIdentifier = SocketIdentifier.asMatchAllSocketsSocketIdentifier(socketIdentifier);

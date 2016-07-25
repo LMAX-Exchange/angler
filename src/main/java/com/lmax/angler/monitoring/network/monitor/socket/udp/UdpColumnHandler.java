@@ -16,12 +16,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 final class UdpColumnHandler implements TokenHandler
 {
     private static final short HEADER_ROW_FIRST_COLUMN_VALUE = ByteBuffer.wrap("sl".getBytes(UTF_8)).getShort();
-    private final Consumer<BufferStatsEntry> bufferStatsEntryConsumer;
-    private final BufferStatsEntry entry = new BufferStatsEntry();
+    private final Consumer<UdpStatsEntry> bufferStatsEntryConsumer;
+    private final UdpStatsEntry entry = new UdpStatsEntry();
     private int currentColumn = 0;
     private boolean headerRow;
 
-    public UdpColumnHandler(final Consumer<BufferStatsEntry> bufferStatsEntryConsumer)
+    public UdpColumnHandler(final Consumer<UdpStatsEntry> bufferStatsEntryConsumer)
     {
         this.bufferStatsEntryConsumer = bufferStatsEntryConsumer;
     }

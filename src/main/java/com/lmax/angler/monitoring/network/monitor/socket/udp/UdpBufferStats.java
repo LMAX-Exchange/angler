@@ -20,7 +20,7 @@ final class UdpBufferStats
         this.inode = inode;
     }
 
-    void updateFrom(final BufferStatsEntry entry)
+    void updateFrom(final UdpStatsEntry entry)
     {
         changed = (this.receiveQueueDepth != entry.getReceiveQueueDepth()) ||
                 (this.drops != entry.getDrops()) ||
