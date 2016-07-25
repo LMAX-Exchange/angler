@@ -30,7 +30,7 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
-version = new Version(major: 1, minor: 0, revision: 3)
+version = new Version(major: 1, minor: 0, revision: 4)
 
 sourceSets {
     main {

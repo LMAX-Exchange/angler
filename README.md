@@ -102,6 +102,11 @@ Large changes in the number of active UDP sockets on the system will cause one-t
 
 ## Change log
 
+### 1.0.4
+
+   * Bugfixes to file handling routine
+   * Report UDP socket transmit buffer depth
+
 ### 1.0.3
 
    * Bugfixes to file handling routines
