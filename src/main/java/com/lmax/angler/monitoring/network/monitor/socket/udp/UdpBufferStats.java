@@ -8,6 +8,7 @@ final class UdpBufferStats
     private final int port;
     private final long inode;
     private long receiveQueueDepth = -1;
+    private long transmitQueueDepth = -1;
     private long drops = -1;
     private boolean changed;
     private long updateCount = -1;
@@ -22,8 +23,10 @@ final class UdpBufferStats
     void updateFrom(final BufferStatsEntry entry)
     {
         changed = (this.receiveQueueDepth != entry.getReceiveQueueDepth()) ||
-                (this.drops != entry.getDrops());
+                (this.drops != entry.getDrops()) ||
+                (this.transmitQueueDepth != entry.getTransmitQueueDepth());
         this.receiveQueueDepth = entry.getReceiveQueueDepth();
+        this.transmitQueueDepth = entry.getTransmitQueueDepth();
         this.drops = entry.getDrops();
     }
 

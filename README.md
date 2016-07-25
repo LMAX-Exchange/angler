@@ -63,7 +63,8 @@ private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStati
     @Override
     public void onStatisticsUpdated(final InetAddress inetAddress, final int port,
                                     final long socketIdentifier, final long inode,
-                                    final long receiveQueueDepth, final long drops)
+                                    final long transmitQueueDepth, final long receiveQueueDepth,
+                                    final long drops)
     {
         if(drops != 0)
         {
@@ -74,7 +75,7 @@ private static class LoggingUdpSocketStatisticsHandler implements UdpSocketStati
 }
 ```
 
-The handler will be notified if the socket's queue-depth or drop-count changes between invocations of the `poll` method.
+The handler will be notified if the socket's queue-depths or drop-count changes between invocations of the `poll` method.
 
 
 See the
