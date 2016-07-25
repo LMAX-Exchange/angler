@@ -50,10 +50,12 @@ final class UdpColumnHandler implements TokenHandler
                     entry.setSocketIdentifier(SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
                     break;
                 case 4:
-                    // do rx queue
+                    // do tx/rx queue
                     // hex
                     //00000000:00000000
+                    final long transmitQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
                     final long receiveQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
+                    entry.setTransmitQueueDepth(transmitQueueDepth);
                     entry.setReceiveQueueDepth(receiveQueueDepth);
                     break;
                 case 9:

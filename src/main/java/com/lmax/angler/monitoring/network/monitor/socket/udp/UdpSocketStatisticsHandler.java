@@ -15,6 +15,7 @@ public interface UdpSocketStatisticsHandler
      * @param socketIdentifier the socket identifier
      * @param inode the socket inode
      * @param receiveQueueDepth the sampled receive queue depth
+     * @param transmitQueueDepth the sampled transmit queue depth
      * @param drops the drop count
      */
     void onStatisticsUpdated(
@@ -23,5 +24,6 @@ public interface UdpSocketStatisticsHandler
             final long socketIdentifier,
             final long inode,
             final long receiveQueueDepth,
+            final long transmitQueueDepth,
             final long drops);
 }

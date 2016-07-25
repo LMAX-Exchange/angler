@@ -25,7 +25,7 @@ public class SocketOwnedByCurrentProcessFilterTest
     @Test
     public void shouldNotNotifyDelegateIfInodeIsNotSocketOwnedByCurrentProcess() throws Exception
     {
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L, 0L);
 
         assertThat(receivedUpdateCount, is(0));
     }
@@ -33,7 +33,7 @@ public class SocketOwnedByCurrentProcessFilterTest
     @Test
     public void shouldNotifyDelegateIfInodeIsSocketOwnedByCurrentProcess() throws Exception
     {
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L, 0L);
 
         assertThat(receivedUpdateCount, is(1));
     }
@@ -41,8 +41,8 @@ public class SocketOwnedByCurrentProcessFilterTest
     @Test
     public void shouldNotRequestInodeUpdateIfInodeIsAlreadyKnown() throws Exception
     {
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L, 0L);
 
         assertThat(receivedUpdateCount, is(2));
         assertThat(socketInodeRequestCount, is(1));
@@ -51,8 +51,8 @@ public class SocketOwnedByCurrentProcessFilterTest
     @Test
     public void shouldNotRequestInodeUpdateOfNotOwnedInodeWhenInodeHasBeenRequestedBefore() throws Exception
     {
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L, 0L);
 
         assertThat(receivedUpdateCount, is(0));
         assertThat(socketInodeRequestCount, is(1));
@@ -65,12 +65,12 @@ public class SocketOwnedByCurrentProcessFilterTest
 
         for(int i = 0; i < SocketOwnedByCurrentProcessFilter.MAX_NOT_OWNED_INODE_CACHE_SIZE + 1; i++)
         {
-            filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, i, 0L, 0L);
+            filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, i, 0L, 0L, 0L);
         }
 
         socketInodeRequestCount = 0;
 
-        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, initialNotOwnedInode, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, initialNotOwnedInode, 0L, 0L, 0L);
 
         assertThat(socketInodeRequestCount, is(1));
     }
@@ -80,6 +80,7 @@ public class SocketOwnedByCurrentProcessFilterTest
                                   final long socketIdentifier,
                                   final long inode,
                                   final long receiveQueueDepth,
+                                  final long transmitQueueDepth,
                                   final long drops)
     {
         receivedUpdateCount++;

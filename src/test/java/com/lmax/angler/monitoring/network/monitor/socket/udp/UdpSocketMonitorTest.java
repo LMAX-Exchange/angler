@@ -58,9 +58,9 @@ public abstract class UdpSocketMonitorTest<T>
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(3));
-        assertEntry(recordedEntries.get(0), "0.0.0.0", 20048, 0, 0, 21682);
-        assertEntry(recordedEntries.get(1), "0.0.0.0", 56150, 0, 4, 13597);
-        assertEntry(recordedEntries.get(2), "192.168.122.1", 53, 166, 0, 15292);
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 20048, 0, 0, 0, 21682);
+        assertEntry(recordedEntries.get(1), "0.0.0.0", 56150, 0, 0, 4, 13597);
+        assertEntry(recordedEntries.get(2), "192.168.122.1", 53, 166, 144, 0, 15292);
     }
 
     @Test
@@ -80,8 +80,8 @@ public abstract class UdpSocketMonitorTest<T>
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(2));
-        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
-        assertEntry(recordedEntries.get(1), "192.168.122.1", 53, 166, 2, 15292);
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 0, 4, 13597);
+        assertEntry(recordedEntries.get(1), "192.168.122.1", 53, 166, 0, 2, 15292);
     }
 
     @Test
@@ -103,7 +103,7 @@ public abstract class UdpSocketMonitorTest<T>
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(1));
-        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 4, 13597);
+        assertEntry(recordedEntries.get(0), "0.0.0.0", 56150, 1, 0, 4, 13597);
     }
 
     @Test
@@ -133,7 +133,7 @@ public abstract class UdpSocketMonitorTest<T>
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(1));
-        assertEntry(recordedEntries.get(0), "239.168.122.1", 53, 166, 0, 15292);
+        assertEntry(recordedEntries.get(0), "239.168.122.1", 53, 166, 0, 0, 15292);
     }
 
     @Test
@@ -144,20 +144,22 @@ public abstract class UdpSocketMonitorTest<T>
 
         final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
         assertThat(recordedEntries.size(), is(1));
-        assertEntry(recordedEntries.get(0), "127.0.0.1", 32770, 0, 0, 15293);
+        assertEntry(recordedEntries.get(0), "127.0.0.1", 32770, 0, 0, 0, 15293);
     }
 
     private static void assertEntry(final MonitoredEntry monitoredEntry,
                                     final String address,
                                     final int port,
-                                    final long queueDepth,
+                                    final long receiveQueueDepth,
+                                    final long transmitQueueDepth, 
                                     final long dropCount,
                                     final long inode) throws UnknownHostException
     {
         final long socketIdentifier = monitoredEntry.getSocketIdentifier();
         assertThat(extractHostIpAddress(socketIdentifier), is(address));
         assertThat(SocketIdentifier.extractPortNumber(socketIdentifier), is(port));
-        assertThat(monitoredEntry.getReceiverQueueDepth(), is(queueDepth));
+        assertThat(monitoredEntry.getReceiverQueueDepth(), is(receiveQueueDepth));
+        assertThat(monitoredEntry.getTransmitQueueDepth(), is(transmitQueueDepth));
         assertThat(monitoredEntry.getDrops(), is(dropCount));
         assertThat(monitoredEntry.getInode(), is(inode));
         assertThat(monitoredEntry.getSocketAddress(), is(new InetSocketAddress(address, port)));

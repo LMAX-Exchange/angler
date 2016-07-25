@@ -153,9 +153,14 @@ public final class UdpSocketMonitor
             lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
             {
-                statisticsHandler.onStatisticsUpdated(lastUpdate.getInetAddress(),
+                statisticsHandler.onStatisticsUpdated(
+                        lastUpdate.getInetAddress(),
                         port,
-                        entry.getSocketIdentifier(), entry.getInode(), entry.getReceiveQueueDepth(), entry.getDrops());
+                        entry.getSocketIdentifier(),
+                        entry.getInode(),
+                        entry.getReceiveQueueDepth(),
+                        entry.getTransmitQueueDepth(),
+                        entry.getDrops());
             }
         }
     }

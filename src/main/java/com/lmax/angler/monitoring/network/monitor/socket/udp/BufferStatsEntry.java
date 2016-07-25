@@ -9,6 +9,7 @@ final class BufferStatsEntry
 {
     private long socketIdentifier;
     private long receiveQueueDepth;
+    private long transmitQueueDepth;
     private long drops;
     private long inode;
 
@@ -42,6 +43,16 @@ final class BufferStatsEntry
         this.receiveQueueDepth = receiveQueueDepth;
     }
 
+    long getTransmitQueueDepth()
+    {
+        return transmitQueueDepth;
+    }
+
+    void setTransmitQueueDepth(final long transmitQueueDepth)
+    {
+        this.transmitQueueDepth = transmitQueueDepth;
+    }
+
     long getDrops()
     {
         return drops;
@@ -64,4 +75,5 @@ final class BufferStatsEntry
         drops = 0L;
         inode = 0L;
     }
+
 }

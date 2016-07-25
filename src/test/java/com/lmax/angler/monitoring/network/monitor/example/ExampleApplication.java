@@ -136,7 +136,8 @@ public final class ExampleApplication implements UdpSocketMonitoringLifecycleLis
     {
         @Override
         public void onStatisticsUpdated(final InetAddress socketAddress, final int port, final long socketIdentifier,
-                                        final long inode, final long receiveQueueDepth, final long drops)
+                                        final long inode, final long receiveQueueDepth, final long transmitQueueDepth,
+                                        final long drops)
         {
             log("Socket [%s:%d], queued: %d, drops: %d", socketAddress.toString(), port, receiveQueueDepth, drops);
         }

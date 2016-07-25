@@ -9,6 +9,7 @@ final class MonitoredEntry
     private final long socketIdentifier;
     private final long inode;
     private final long receiverQueueDepth;
+    private final long transmitQueueDepth;
     private final long drops;
 
     MonitoredEntry(
@@ -17,12 +18,14 @@ final class MonitoredEntry
             final long socketIdentifier,
             final long inode,
             final long receiverQueueDepth,
+            final long transmitQueueDepth,
             final long drops)
     {
         this.socketAddress = new InetSocketAddress(inetAddress, port);
         this.socketIdentifier = socketIdentifier;
         this.inode = inode;
         this.receiverQueueDepth = receiverQueueDepth;
+        this.transmitQueueDepth = transmitQueueDepth;
         this.drops = drops;
     }
 
@@ -39,6 +42,11 @@ final class MonitoredEntry
     long getReceiverQueueDepth()
     {
         return receiverQueueDepth;
+    }
+
+    long getTransmitQueueDepth()
+    {
+        return transmitQueueDepth;
     }
 
     long getDrops()

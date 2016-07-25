@@ -14,9 +14,11 @@ final class RecordingUdpSocketStatisticsHandler implements UdpSocketStatisticsHa
                                     final long socketIdentifier,
                                     final long inode,
                                     final long receiveQueueDepth,
+                                    final long transmitQueueDepth,
                                     final long drops)
     {
-        recordedEntries.add(new MonitoredEntry(inetAddress, port, socketIdentifier, inode, receiveQueueDepth, drops));
+        recordedEntries.add(new MonitoredEntry(inetAddress, port, socketIdentifier, inode,
+                receiveQueueDepth, transmitQueueDepth, drops));
     }
 
     List<MonitoredEntry> getRecordedEntries()
