@@ -1,11 +1,8 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -15,28 +12,24 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-@Ignore("work in progress")
-public class AddressOnlySpecUdpSocketMonitorTest extends TcpSocketMonitorTest<InetAddress>
+public class AddressAndPortSpecTcpSocketMonitorTest extends TcpSocketMonitorTest<InetSocketAddress>
 {
     @Override
-    protected Consumer<InetAddress> getBeginMonitoringRequestMethod()
+    protected Consumer<InetSocketAddress> getBeginMonitoringRequestMethod()
     {
         return monitor::beginMonitoringOf;
     }
 
     @Override
-    protected Consumer<InetAddress> getEndMonitoringRequestMethod()
+    protected Consumer<InetSocketAddress> getEndMonitoringRequestMethod()
     {
         return monitor::endMonitoringOf;
     }
 
     @Override
-    protected Collection<InetAddress> requestSpecFor(final InetSocketAddress... request)
+    protected Collection<InetSocketAddress> requestSpecFor(final InetSocketAddress... request)
     {
-        return
-                Arrays.stream(request).map(s -> s.getAddress().getHostAddress()).
-                        collect(Collectors.toSet()).stream().map(this::getByNameOrThrow).
-                        collect(Collectors.toList());
+        return Arrays.stream(request).collect(Collectors.toList());
     }
 
     @Test
@@ -58,20 +51,8 @@ public class AddressOnlySpecUdpSocketMonitorTest extends TcpSocketMonitorTest<In
         assertThat(monitoringStartedList.get(1), is(getSocketAddress("0.0.0.0", 56150)));
 
         final List<InetSocketAddress> monitoringStoppedList = lifecycleListener.getMonitoringStoppedList();
-        assertThat(monitoringStoppedList.size(), is(2));
+        assertThat(monitoringStoppedList.size(), is(1));
         assertThat(monitoringStoppedList.get(0), is(getSocketAddress("0.0.0.0", 56150)));
-        assertThat(monitoringStoppedList.get(1), is(getSocketAddress("0.0.0.0", 20048)));
     }
 
-    private InetAddress getByNameOrThrow(final String host)
-    {
-        try
-        {
-            return InetAddress.getByName(host);
-        }
-        catch (UnknownHostException e)
-        {
-            throw new IllegalArgumentException("Cannot create InetAddress from host: " + host);
-        }
-    }
 }

@@ -35,7 +35,7 @@ public abstract class TcpSocketMonitorTest<T>
     @Before
     public void before() throws Exception
     {
-        inputPath = Files.createTempFile("proc-net-udp", "txt");
+        inputPath = Files.createTempFile("proc-net-tcp", "txt");
         ResourceUtil.writeDataFile("proc_net_tcp_sample.txt", inputPath);
         monitor = new TcpSocketMonitor(lifecycleListener, inputPath);
     }
@@ -74,7 +74,7 @@ public abstract class TcpSocketMonitorTest<T>
         monitor.poll(recordingTcpSocketStatisticsHandler);
         recordingTcpSocketStatisticsHandler.getRecordedEntries().clear();
 
-        ResourceUtil.writeDataFile("proc_net_udp_updated_sample.txt", inputPath);
+        ResourceUtil.writeDataFile("proc_net_tcp_updated_sample.txt", inputPath);
 
         monitor.poll(recordingTcpSocketStatisticsHandler);
 
@@ -95,7 +95,7 @@ public abstract class TcpSocketMonitorTest<T>
         monitor.poll(recordingTcpSocketStatisticsHandler);
         recordingTcpSocketStatisticsHandler.getRecordedEntries().clear();
 
-        ResourceUtil.writeDataFile("proc_net_udp_updated_sample.txt", inputPath);
+        ResourceUtil.writeDataFile("proc_net_tcp_updated_sample.txt", inputPath);
 
         endMonitoring(requestSpecFor(getSocketAddress("192.168.122.1", 53)));
 
@@ -112,7 +112,7 @@ public abstract class TcpSocketMonitorTest<T>
         beginMonitoring(requestSpecFor(getSocketAddress("0.0.0.0", 20048)));
         monitor.poll(recordingTcpSocketStatisticsHandler);
 
-        ResourceUtil.writeDataFile("proc_net_udp_socket_removed_sample.txt", inputPath);
+        ResourceUtil.writeDataFile("proc_net_tcp_socket_removed_sample.txt", inputPath);
 
         monitor.poll(recordingTcpSocketStatisticsHandler);
 
@@ -127,7 +127,7 @@ public abstract class TcpSocketMonitorTest<T>
         beginMonitoring(requestSpecFor(getSocketAddress("239.168.122.1", 53)));
         monitor.poll(recordingTcpSocketStatisticsHandler);
 
-        ResourceUtil.writeDataFile("proc_net_udp_signed_first_octet_sample.txt", inputPath);
+        ResourceUtil.writeDataFile("proc_net_tcp_signed_first_octet_sample.txt", inputPath);
 
         monitor.poll(recordingTcpSocketStatisticsHandler);
 

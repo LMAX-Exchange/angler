@@ -1,0 +1,93 @@
+package com.lmax.angler.monitoring.network.monitor.socket.tcp;
+
+import org.agrona.collections.LongHashSet;
+import org.junit.Test;
+
+import java.net.InetAddress;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+public class SocketOwnedByCurrentProcessFilterTest
+{
+    private static final long INODE_OWNED_BY_PROCESS = 8765542L;
+    private static final long INODE_NOT_OWNED_BY_PROCESS = Long.MAX_VALUE;
+    private static final int PORT = 55555;
+    private static final InetAddress INET_ADDRESS = InetAddress.getLoopbackAddress();
+
+    private final TcpSocketStatisticsHandler delegate = this::handleStatistics;
+    private final SocketOwnedByCurrentProcessFilter filter =
+            new SocketOwnedByCurrentProcessFilter(delegate, this::populateSocketInodes);
+
+    private int receivedUpdateCount;
+    private int socketInodeRequestCount;
+
+    @Test
+    public void shouldNotNotifyDelegateIfInodeIsNotSocketOwnedByCurrentProcess() throws Exception
+    {
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
+
+        assertThat(receivedUpdateCount, is(0));
+    }
+
+    @Test
+    public void shouldNotifyDelegateIfInodeIsSocketOwnedByCurrentProcess() throws Exception
+    {
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
+
+        assertThat(receivedUpdateCount, is(1));
+    }
+
+    @Test
+    public void shouldNotRequestInodeUpdateIfInodeIsAlreadyKnown() throws Exception
+    {
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_OWNED_BY_PROCESS, 0L, 0L);
+
+        assertThat(receivedUpdateCount, is(2));
+        assertThat(socketInodeRequestCount, is(1));
+    }
+
+    @Test
+    public void shouldNotRequestInodeUpdateOfNotOwnedInodeWhenInodeHasBeenRequestedBefore() throws Exception
+    {
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, INODE_NOT_OWNED_BY_PROCESS, 0L, 0L);
+
+        assertThat(receivedUpdateCount, is(0));
+        assertThat(socketInodeRequestCount, is(1));
+    }
+
+    @Test
+    public void shouldClearNotOwnedInodeCacheToPreventMemoryLeak() throws Exception
+    {
+        final int initialNotOwnedInode = 0;
+
+        for(int i = 0; i < SocketOwnedByCurrentProcessFilter.MAX_NOT_OWNED_INODE_CACHE_SIZE + 1; i++)
+        {
+            filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, i, 0L, 0L);
+        }
+
+        socketInodeRequestCount = 0;
+
+        filter.onStatisticsUpdated(INET_ADDRESS, PORT, 17L, initialNotOwnedInode, 0L, 0L);
+
+        assertThat(socketInodeRequestCount, is(1));
+    }
+
+    private void handleStatistics(final InetAddress inetAddress,
+                                  final int port,
+                                  final long socketIdentifier,
+                                  final long inode,
+                                  final long receiveQueueDepth,
+                                  final long transmitQueueDepth)
+    {
+        receivedUpdateCount++;
+    }
+
+    private void populateSocketInodes(final LongHashSet socketInodes)
+    {
+        socketInodes.add(INODE_OWNED_BY_PROCESS);
+        socketInodeRequestCount++;
+    }
+}
