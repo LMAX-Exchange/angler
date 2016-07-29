@@ -27,10 +27,10 @@ repositories {
 
 dependencies {
     compile 'org.agrona:Agrona:0.5.3'
-    testCompile "junit:junit:4.11"
+    testCompile "junit:junit:4.12"
 }
 
-version = new Version(major: 1, minor: 0, revision: 4)
+version = new Version(major: 1, minor: 0, revision: 5)
 
 sourceSets {
     main {
