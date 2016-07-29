@@ -1,6 +1,6 @@
 # Angler
 
-Angler is a utility for monitoring the performance of inbound UDP message-processing in the Linux kernel.
+Angler is a utility for monitoring the performance of UDP and TCP message-processing in the Linux kernel.
 
 [![Build Status](https://travis-ci.org/LMAX-Exchange/angler.svg)](https://travis-ci.org/LMAX-Exchange/angler)
 
@@ -11,7 +11,7 @@ Angler is a utility for monitoring the performance of inbound UDP message-proces
 
 ## What can it tell me?
 
-Angler will notify registered listeners of buffer-depths, packet drops and receive errors of individual sockets.
+Angler will notify registered listeners of buffer-depths, packet drops and receive errors of individual UDP and TCP sockets.
 
 System-wide UDP receive metrics will also be supplied if requested.
 
@@ -20,7 +20,7 @@ Current metric sources are:
 
 ### `/proc/net/udp`
 
-1.   socket queue depth
+1.   socket queue (transmit & receive) depth
 2.   socket drop count
 
 ### `/proc/net/snmp`
@@ -35,6 +35,10 @@ Current metric sources are:
 2.   time squeeze events
 3.   drop events
 
+### `/proc/net/tcp`
+
+1.   socket queue (transmit & receive) depth
+
 
 Monitoring these metrics can be useful when trying to track down the source of packet-loss in
 high-throughput traffic scenarios.
@@ -42,7 +46,7 @@ high-throughput traffic scenarios.
 
 ## How do I use it?
 
-The simplest use-case for Angler is to monitor socket receive-queue depth and drop counts:
+The simplest use-case for Angler is to monitor socket queue depth and drop counts:
 
 ```java
 // begin monitoring
@@ -91,7 +95,7 @@ To test functionality, check out the project and run `./gradlew runExample`.
 Angler will not generate garbage once in a steady-state.
 
 Adding and removing sockets from the monitored set will cause allocation.
-Large changes in the number of active UDP sockets on the system will cause one-time allocation of a larger read-buffer for `/proc/net/udp`.
+Large changes in the number of active UDP or TCP sockets on the system will cause one-time allocation of a larger read-buffer for datasources.
 
 
 ## Road map
@@ -101,6 +105,10 @@ Large changes in the number of active UDP sockets on the system will cause one-t
 
 
 ## Change log
+
+### 1.0.5
+
+   * Report TCP socket transmit and receive buffer depth
 
 ### 1.0.4
 
