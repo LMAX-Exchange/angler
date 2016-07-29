@@ -109,6 +109,7 @@ Large changes in the number of active UDP or TCP sockets on the system will caus
 ### 1.0.5
 
    * Report TCP socket transmit and receive buffer depth
+   * Upgrade to Agrona 0.5.3
 
 ### 1.0.4
 
