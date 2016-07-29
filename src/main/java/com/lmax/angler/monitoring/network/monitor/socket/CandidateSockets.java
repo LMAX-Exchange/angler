@@ -5,6 +5,9 @@ import org.agrona.collections.Long2ObjectHashMap;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Thread-safe repository for sockets requested for monitoring.
+ */
 public final class CandidateSockets
 {
     private static final float AGRONA_DEFAULT_LOAD_FACTOR = 0.67f;

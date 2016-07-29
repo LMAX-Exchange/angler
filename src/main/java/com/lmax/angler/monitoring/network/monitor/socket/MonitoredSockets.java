@@ -4,6 +4,10 @@ import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;
 
+/**
+ * Repository for sockets that are currently being monitored.
+ * @param <T> a socket
+ */
 public final class MonitoredSockets<T extends DescribableSocket>
 {
     private final Long2ObjectHashMap<T> monitoredSocketInstances = new Long2ObjectHashMap<>();
