@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -15,7 +14,6 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-@Ignore("work in progress")
 public class AddressOnlySpecTcpSocketMonitorTest extends TcpSocketMonitorTest<InetAddress>
 {
     @Override
