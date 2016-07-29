@@ -1,5 +1,6 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
+import com.lmax.angler.monitoring.network.monitor.socket.CandidateSockets;
 import com.lmax.angler.monitoring.network.monitor.socket.MonitoredSockets;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketMonitoringLifecycleListener;
@@ -13,7 +14,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.asMatchAllSocketsSocketIdentifier;
 import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4AddressAndInode;
@@ -24,11 +24,8 @@ import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier
  */
 public final class TcpSocketMonitor
 {
-    private static final float AGRONA_DEFAULT_LOAD_FACTOR = 0.67f;
-
     private final MonitoredSockets<TcpBufferStats> monitoredSockets;
-    private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets =
-            new AtomicReference<>(new Long2ObjectHashMap<>());
+    private final CandidateSockets candidateSockets = new CandidateSockets();
     private final TcpColumnHandler tokenHandler = new TcpColumnHandler(this::handleEntry);
     private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
 
@@ -42,9 +39,9 @@ public final class TcpSocketMonitor
         this(lifecycleListener, Paths.get("/proc/net/tcp"));
     }
 
-    TcpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
+    TcpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetTcp)
     {
-        fileLoader = new FileLoader(pathToProcNetUdp, 65536);
+        fileLoader = new FileLoader(pathToProcNetTcp, 65536);
         monitoredSockets = new MonitoredSockets<>(lifecycleListener);
     }
 
@@ -85,7 +82,7 @@ public final class TcpSocketMonitor
      */
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
-        beginMonitoringSocketIdentifier(socketAddress, SocketIdentifier.fromInet4SocketAddress(socketAddress));
+        candidateSockets.beginMonitoringSocketIdentifier(socketAddress, SocketIdentifier.fromInet4SocketAddress(socketAddress));
     }
 
     /**
@@ -97,7 +94,7 @@ public final class TcpSocketMonitor
      */
     public void endMonitoringOf(final InetSocketAddress socketAddress)
     {
-        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4SocketAddress(socketAddress));
+        candidateSockets.endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4SocketAddress(socketAddress));
     }
 
     /**
@@ -110,7 +107,7 @@ public final class TcpSocketMonitor
     public void beginMonitoringOf(final InetAddress inetAddress)
     {
         final long socketIdentifier = SocketIdentifier.fromInet4Address(inetAddress);
-        beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
+        candidateSockets.beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
     }
 
     /**
@@ -122,7 +119,7 @@ public final class TcpSocketMonitor
      */
     public void endMonitoringOf(final InetAddress inetAddress)
     {
-        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
+        candidateSockets.endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
     }
 
     /**
@@ -135,7 +132,7 @@ public final class TcpSocketMonitor
      */
     public void beginMonitoringOf(final InetSocketAddress socketAddress, final int inode)
     {
-        beginMonitoringSocketIdentifier(socketAddress, fromInet4SocketAddressAndInode(socketAddress, inode));
+        candidateSockets.beginMonitoringSocketIdentifier(socketAddress, fromInet4SocketAddressAndInode(socketAddress, inode));
     }
 
     /**
@@ -148,7 +145,7 @@ public final class TcpSocketMonitor
      */
     public void endMonitoringOf(final InetSocketAddress socketAddress, final int inode)
     {
-        endMonitoringOfSocketIdentifier(fromInet4SocketAddressAndInode(socketAddress, inode));
+        candidateSockets.endMonitoringOfSocketIdentifier(fromInet4SocketAddressAndInode(socketAddress, inode));
     }
 
     /**
@@ -162,7 +159,7 @@ public final class TcpSocketMonitor
     public void beginMonitoringOf(final InetAddress inetAddress, final int inode)
     {
         final long socketIdentifier = fromInet4AddressAndInode(inetAddress, inode);
-        beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
+        candidateSockets.beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
     }
 
     /**
@@ -175,7 +172,7 @@ public final class TcpSocketMonitor
      */
     public void endMonitoringOf(final InetAddress inetAddress, final int inode)
     {
-        endMonitoringOfSocketIdentifier(fromInet4AddressAndInode(inetAddress, inode));
+        candidateSockets.endMonitoringOfSocketIdentifier(fromInet4AddressAndInode(inetAddress, inode));
     }
 
 
@@ -184,7 +181,7 @@ public final class TcpSocketMonitor
         final long socketIdentifier = entry.getSocketIdentifier();
         final long matchAllPortsSocketIdentifier = asMatchAllSocketsSocketIdentifier(socketIdentifier);
         final long matchAllPortsSocketInstanceIdentifier = asMatchAllSocketsSocketIdentifier(entry.getSocketInstanceIndentifier());
-        final Long2ObjectHashMap<InetSocketAddress> candidateSocketsSnapshot = candidateSockets.get();
+        final Long2ObjectHashMap<InetSocketAddress> candidateSocketsSnapshot = candidateSockets.getSnapshot();
 
         if(candidateSocketsSnapshot.containsKey(socketIdentifier) ||
                 candidateSocketsSnapshot.containsKey(matchAllPortsSocketIdentifier) ||
@@ -229,53 +226,6 @@ public final class TcpSocketMonitor
                         entry.getInode(),
                         entry.getReceiveQueueDepth(),
                         entry.getTransmitQueueDepth());
-            }
-        }
-    }
-
-    private void beginMonitoringSocketIdentifier(final InetSocketAddress socketAddress, final long socketIdentifier)
-    {
-        while (true)
-        {
-            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
-            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
-
-            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
-            while(keyIterator.hasNext())
-            {
-                final long key = keyIterator.nextLong();
-                updated.put(key, candidateSnapshot.get(key));
-            }
-
-            updated.put(socketIdentifier, socketAddress);
-
-            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
-            {
-                break;
-            }
-        }
-    }
-
-    private void endMonitoringOfSocketIdentifier(final long socketIdentifier)
-    {
-        while (true)
-        {
-            final Long2ObjectHashMap<InetSocketAddress> candidateSnapshot = candidateSockets.get();
-            final Long2ObjectHashMap<InetSocketAddress> updated = new Long2ObjectHashMap<>(candidateSnapshot.size(), AGRONA_DEFAULT_LOAD_FACTOR);
-
-            final Long2ObjectHashMap<InetSocketAddress>.KeyIterator keyIterator = candidateSnapshot.keySet().iterator();
-            while(keyIterator.hasNext())
-            {
-                final long key = keyIterator.nextLong();
-                if(key != socketIdentifier)
-                {
-                    updated.put(key, candidateSnapshot.get(key));
-                }
-            }
-
-            if (candidateSockets.compareAndSet(candidateSnapshot, updated))
-            {
-                break;
             }
         }
     }
