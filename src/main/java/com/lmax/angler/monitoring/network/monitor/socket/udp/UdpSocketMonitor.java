@@ -1,12 +1,12 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
+import com.lmax.angler.monitoring.network.monitor.socket.MonitoredSockets;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
+import com.lmax.angler.monitoring.network.monitor.socket.SocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
 import com.lmax.angler.monitoring.network.monitor.util.Parsers;
 import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import org.agrona.collections.Long2ObjectHashMap;
-import org.agrona.collections.LongHashSet;
-import org.agrona.collections.LongIterator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -28,11 +28,10 @@ public final class UdpSocketMonitor
 {
     private static final float AGRONA_DEFAULT_LOAD_FACTOR = 0.67f;
 
-    private final Long2ObjectHashMap<UdpBufferStats> monitoredSocketInstances = new Long2ObjectHashMap<>();
-    private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets = new AtomicReference<>(new Long2ObjectHashMap<>());
-    private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
+    private final MonitoredSockets<UdpBufferStats> monitoredSockets;
+    private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets =
+            new AtomicReference<>(new Long2ObjectHashMap<>());
 
-    private final UdpSocketMonitoringLifecycleListener lifecycleListener;
     private final UdpColumnHandler tokenHandler = new UdpColumnHandler(this::handleEntry);
     private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
 
@@ -41,15 +40,15 @@ public final class UdpSocketMonitor
     private UdpSocketStatisticsHandler statisticsHandler;
     private long updateCount = 0;
 
-    public UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener)
+    public UdpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener)
     {
         this(lifecycleListener, Paths.get("/proc/net/udp"));
     }
 
-    UdpSocketMonitor(final UdpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
+    UdpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
-        this.lifecycleListener = lifecycleListener;
         fileLoader = new FileLoader(pathToProcNetUdp, 65536);
+        monitoredSockets = new MonitoredSockets<>(lifecycleListener);
     }
 
     /**
@@ -75,7 +74,7 @@ public final class UdpSocketMonitor
             this.statisticsHandler = null;
         }
 
-        purgeStaleEntries();
+        monitoredSockets.purgeEntriesOlderThan(updateCount);
 
         updateCount++;
     }
@@ -196,7 +195,7 @@ public final class UdpSocketMonitor
         {
             final long socketInstanceIdentifier = entry.getSocketInstanceIndentifier();
             final int port = SocketIdentifier.extractPortNumber(socketIdentifier);
-            if(!monitoredSocketInstances.containsKey(socketInstanceIdentifier))
+            if(!monitoredSockets.contains(socketInstanceIdentifier))
             {
                 InetSocketAddress socketAddress = candidateSocketsSnapshot.get(socketIdentifier);
                 if(socketAddress == null)
@@ -215,12 +214,11 @@ public final class UdpSocketMonitor
                     // this is an inode-specific, match-all ports request
                     socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketInstanceIdentifier);
                 }
-                monitoredSocketInstances.put(socketInstanceIdentifier,
+                monitoredSockets.put(socketInstanceIdentifier,
                         new UdpBufferStats(socketAddress.getAddress(),
                                 port, entry.getInode()));
-                lifecycleListener.socketMonitoringStarted(socketAddress.getAddress(), port, entry.getInode());
             }
-            final UdpBufferStats lastUpdate = monitoredSocketInstances.get(socketInstanceIdentifier);
+            final UdpBufferStats lastUpdate = monitoredSockets.get(socketInstanceIdentifier);
             lastUpdate.updateFrom(entry);
             lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
@@ -234,28 +232,6 @@ public final class UdpSocketMonitor
                         entry.getTransmitQueueDepth(),
                         entry.getDrops());
             }
-        }
-    }
-
-    private void purgeStaleEntries()
-    {
-        keysForRemoval.clear();
-        final Long2ObjectHashMap<UdpBufferStats>.KeyIterator iterator = monitoredSocketInstances.keySet().iterator();
-        while(iterator.hasNext())
-        {
-            final long key = iterator.nextLong();
-            if(monitoredSocketInstances.get(key).getUpdateCount() != updateCount)
-            {
-                keysForRemoval.add(key);
-            }
-        }
-
-        final LongIterator keyIterator = keysForRemoval.iterator();
-        while(keyIterator.hasNext())
-        {
-            final long key = keyIterator.nextValue();
-            final UdpBufferStats staleEntry = monitoredSocketInstances.remove(key);
-            lifecycleListener.socketMonitoringStopped(staleEntry.getInetAddress(), staleEntry.getPort(), staleEntry.getInode());
         }
     }
 

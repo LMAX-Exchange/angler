@@ -1,7 +1,7 @@
 package com.lmax.angler.monitoring.network.monitor.example;
 
+import com.lmax.angler.monitoring.network.monitor.socket.SocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.socket.udp.UdpSocketMonitor;
-import com.lmax.angler.monitoring.network.monitor.socket.udp.UdpSocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.socket.udp.UdpSocketStatisticsHandler;
 import com.lmax.angler.monitoring.network.monitor.system.snmp.SystemNetworkManagementMonitor;
 import com.lmax.angler.monitoring.network.monitor.system.snmp.udp.SnmpUdpStatisticsHandler;
@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class ExampleApplication implements UdpSocketMonitoringLifecycleListener
+public final class ExampleApplication implements SocketMonitoringLifecycleListener
 {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 

@@ -1,6 +1,7 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
 import com.lmax.angler.monitoring.network.monitor.ResourceUtil;
+import com.lmax.angler.monitoring.network.monitor.socket.RecordingSocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import org.junit.After;
 import org.junit.Before;
@@ -23,8 +24,8 @@ public abstract class TcpSocketMonitorTest<T>
 {
     protected final RecordingTcpSocketStatisticsHandler recordingTcpSocketStatisticsHandler =
             new RecordingTcpSocketStatisticsHandler();
-    protected final RecordingTcpSocketMonitoringLifecycleListener lifecycleListener =
-            new RecordingTcpSocketMonitoringLifecycleListener();
+    protected final RecordingSocketMonitoringLifecycleListener lifecycleListener =
+            new RecordingSocketMonitoringLifecycleListener();
     private Path inputPath;
     protected TcpSocketMonitor monitor;
 

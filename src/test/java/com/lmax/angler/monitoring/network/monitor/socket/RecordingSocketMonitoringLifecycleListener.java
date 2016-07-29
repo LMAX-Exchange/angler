@@ -1,11 +1,11 @@
-package com.lmax.angler.monitoring.network.monitor.socket.udp;
+package com.lmax.angler.monitoring.network.monitor.socket;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RecordingUdpSocketMonitoringLifecycleListener implements UdpSocketMonitoringLifecycleListener
+public final class RecordingSocketMonitoringLifecycleListener implements SocketMonitoringLifecycleListener
 {
     private final List<InetSocketAddress> monitoringStartedList = new ArrayList<>();
     private final List<InetSocketAddress> monitoringStoppedList = new ArrayList<>();
@@ -22,12 +22,12 @@ final class RecordingUdpSocketMonitoringLifecycleListener implements UdpSocketMo
         monitoringStoppedList.add(new InetSocketAddress(inetAddress, port));
     }
 
-    List<InetSocketAddress> getMonitoringStartedList()
+    public List<InetSocketAddress> getMonitoringStartedList()
     {
         return monitoringStartedList;
     }
 
-    List<InetSocketAddress> getMonitoringStoppedList()
+    public List<InetSocketAddress> getMonitoringStoppedList()
     {
         return monitoringStoppedList;
     }

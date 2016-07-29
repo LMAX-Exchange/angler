@@ -1,12 +1,12 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
+import com.lmax.angler.monitoring.network.monitor.socket.MonitoredSockets;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
+import com.lmax.angler.monitoring.network.monitor.socket.SocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.util.FileLoader;
 import com.lmax.angler.monitoring.network.monitor.util.Parsers;
 import com.lmax.angler.monitoring.network.monitor.util.TokenHandler;
 import org.agrona.collections.Long2ObjectHashMap;
-import org.agrona.collections.LongHashSet;
-import org.agrona.collections.LongIterator;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -20,17 +20,15 @@ import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier
 import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4SocketAddressAndInode;
 
 /**
- * Monitor for reporting changes in /proc/net/udp.
+ * Monitor for reporting changes in /proc/net/tcp.
  */
 public final class TcpSocketMonitor
 {
     private static final float AGRONA_DEFAULT_LOAD_FACTOR = 0.67f;
 
-    private final Long2ObjectHashMap<TcpBufferStats> monitoredSocketInstances = new Long2ObjectHashMap<>();
-    private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets = new AtomicReference<>(new Long2ObjectHashMap<>());
-    private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
-
-    private final TcpSocketMonitoringLifecycleListener lifecycleListener;
+    private final MonitoredSockets<TcpBufferStats> monitoredSockets;
+    private final AtomicReference<Long2ObjectHashMap<InetSocketAddress>> candidateSockets =
+            new AtomicReference<>(new Long2ObjectHashMap<>());
     private final TcpColumnHandler tokenHandler = new TcpColumnHandler(this::handleEntry);
     private final TokenHandler lineParser = Parsers.rowColumnParser(tokenHandler);
 
@@ -39,15 +37,15 @@ public final class TcpSocketMonitor
     private TcpSocketStatisticsHandler statisticsHandler;
     private long updateCount = 0;
 
-    public TcpSocketMonitor(final TcpSocketMonitoringLifecycleListener lifecycleListener)
+    public TcpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener)
     {
         this(lifecycleListener, Paths.get("/proc/net/tcp"));
     }
 
-    TcpSocketMonitor(final TcpSocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
+    TcpSocketMonitor(final SocketMonitoringLifecycleListener lifecycleListener, final Path pathToProcNetUdp)
     {
-        this.lifecycleListener = lifecycleListener;
         fileLoader = new FileLoader(pathToProcNetUdp, 65536);
+        monitoredSockets = new MonitoredSockets<>(lifecycleListener);
     }
 
     /**
@@ -73,7 +71,7 @@ public final class TcpSocketMonitor
             this.statisticsHandler = null;
         }
 
-        purgeStaleEntries();
+        monitoredSockets.purgeEntriesOlderThan(updateCount);
 
         updateCount++;
     }
@@ -193,9 +191,8 @@ public final class TcpSocketMonitor
                 candidateSocketsSnapshot.containsKey(entry.getSocketInstanceIndentifier()) ||
                 candidateSocketsSnapshot.containsKey(matchAllPortsSocketInstanceIdentifier))
         {
-            final long socketInstanceIdentifier = entry.getSocketInstanceIndentifier();
             final int port = SocketIdentifier.extractPortNumber(socketIdentifier);
-            if(!monitoredSocketInstances.containsKey(socketInstanceIdentifier))
+            if(!monitoredSockets.contains(entry.getSocketInstanceIndentifier()))
             {
                 InetSocketAddress socketAddress = candidateSocketsSnapshot.get(socketIdentifier);
                 if(socketAddress == null)
@@ -214,12 +211,13 @@ public final class TcpSocketMonitor
                     // this is an inode-specific, match-all ports request
                     socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketInstanceIdentifier);
                 }
-                monitoredSocketInstances.put(socketInstanceIdentifier,
+                monitoredSockets.put(entry.getSocketInstanceIndentifier(),
                         new TcpBufferStats(socketAddress.getAddress(),
                                 port, entry.getInode()));
-                lifecycleListener.socketMonitoringStarted(socketAddress.getAddress(), port, entry.getInode());
+
+
             }
-            final TcpBufferStats lastUpdate = monitoredSocketInstances.get(socketInstanceIdentifier);
+            final TcpBufferStats lastUpdate = monitoredSockets.get(entry.getSocketInstanceIndentifier());
             lastUpdate.updateFrom(entry);
             lastUpdate.updateCount(updateCount);
             if(lastUpdate.hasChanged())
@@ -232,28 +230,6 @@ public final class TcpSocketMonitor
                         entry.getReceiveQueueDepth(),
                         entry.getTransmitQueueDepth());
             }
-        }
-    }
-
-    private void purgeStaleEntries()
-    {
-        keysForRemoval.clear();
-        final Long2ObjectHashMap<TcpBufferStats>.KeyIterator iterator = monitoredSocketInstances.keySet().iterator();
-        while(iterator.hasNext())
-        {
-            final long key = iterator.nextLong();
-            if(monitoredSocketInstances.get(key).getUpdateCount() != updateCount)
-            {
-                keysForRemoval.add(key);
-            }
-        }
-
-        final LongIterator keyIterator = keysForRemoval.iterator();
-        while(keyIterator.hasNext())
-        {
-            final long key = keyIterator.nextValue();
-            final TcpBufferStats staleEntry = monitoredSocketInstances.remove(key);
-            lifecycleListener.socketMonitoringStopped(staleEntry.getInetAddress(), staleEntry.getPort(), staleEntry.getInode());
         }
     }
 

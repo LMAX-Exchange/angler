@@ -1,8 +1,11 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
+import com.lmax.angler.monitoring.network.monitor.DescribableSocket;
+import com.lmax.angler.monitoring.network.monitor.socket.SocketDescriptor;
+
 import java.net.InetAddress;
 
-final class UdpBufferStats
+final class UdpBufferStats implements DescribableSocket
 {
     private final InetAddress inetAddress;
     private final int port;
@@ -40,7 +43,8 @@ final class UdpBufferStats
         this.updateCount = updateCount;
     }
 
-    long getUpdateCount()
+    @Override
+    public long getUpdateCount()
     {
         return updateCount;
     }
@@ -58,5 +62,11 @@ final class UdpBufferStats
     InetAddress getInetAddress()
     {
         return inetAddress;
+    }
+
+    @Override
+    public void describeTo(final SocketDescriptor descriptor)
+    {
+        descriptor.set(inetAddress, port, inode);
     }
 }

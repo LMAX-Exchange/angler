@@ -1,8 +1,11 @@
 package com.lmax.angler.monitoring.network.monitor.socket.tcp;
 
+import com.lmax.angler.monitoring.network.monitor.DescribableSocket;
+import com.lmax.angler.monitoring.network.monitor.socket.SocketDescriptor;
+
 import java.net.InetAddress;
 
-final class TcpBufferStats
+final class TcpBufferStats implements DescribableSocket
 {
     private final InetAddress inetAddress;
     private final int port;
@@ -37,7 +40,8 @@ final class TcpBufferStats
         this.updateCount = updateCount;
     }
 
-    long getUpdateCount()
+    @Override
+    public long getUpdateCount()
     {
         return updateCount;
     }
@@ -55,5 +59,11 @@ final class TcpBufferStats
     InetAddress getInetAddress()
     {
         return inetAddress;
+    }
+
+    @Override
+    public void describeTo(final SocketDescriptor descriptor)
+    {
+        descriptor.set(inetAddress, port, inode);
     }
 }

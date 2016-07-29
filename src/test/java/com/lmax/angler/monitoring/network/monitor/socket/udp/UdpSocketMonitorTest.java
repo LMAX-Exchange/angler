@@ -1,6 +1,7 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
 import com.lmax.angler.monitoring.network.monitor.ResourceUtil;
+import com.lmax.angler.monitoring.network.monitor.socket.RecordingSocketMonitoringLifecycleListener;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier;
 import org.junit.After;
 import org.junit.Before;
@@ -23,8 +24,8 @@ public abstract class UdpSocketMonitorTest<T>
 {
     protected final RecordingUdpSocketStatisticsHandler recordingUdpSocketStatisticsHandler =
             new RecordingUdpSocketStatisticsHandler();
-    protected final RecordingUdpSocketMonitoringLifecycleListener lifecycleListener =
-            new RecordingUdpSocketMonitoringLifecycleListener();
+    protected final RecordingSocketMonitoringLifecycleListener lifecycleListener =
+            new RecordingSocketMonitoringLifecycleListener();
     private Path inputPath;
     protected UdpSocketMonitor monitor;
 

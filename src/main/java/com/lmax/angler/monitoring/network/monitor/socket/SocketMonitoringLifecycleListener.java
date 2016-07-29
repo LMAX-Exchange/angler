@@ -1,11 +1,11 @@
-package com.lmax.angler.monitoring.network.monitor.socket.tcp;
+package com.lmax.angler.monitoring.network.monitor.socket;
 
 import java.net.InetAddress;
 
 /**
  * Callback for notifications when a socket becomes available/unavailable for monitoring.
  */
-public interface TcpSocketMonitoringLifecycleListener
+public interface SocketMonitoringLifecycleListener
 {
     /**
      * Socket is available for monitoring.
