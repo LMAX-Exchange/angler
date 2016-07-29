@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.socket;
 
-import com.lmax.angler.monitoring.network.monitor.DescribableSocket;
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
 import org.agrona.collections.LongIterator;

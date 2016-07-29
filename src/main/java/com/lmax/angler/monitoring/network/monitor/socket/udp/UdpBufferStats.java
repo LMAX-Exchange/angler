@@ -1,6 +1,6 @@
 package com.lmax.angler.monitoring.network.monitor.socket.udp;
 
-import com.lmax.angler.monitoring.network.monitor.DescribableSocket;
+import com.lmax.angler.monitoring.network.monitor.socket.DescribableSocket;
 import com.lmax.angler.monitoring.network.monitor.socket.SocketDescriptor;
 
 import java.net.InetAddress;
