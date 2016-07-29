@@ -61,6 +61,18 @@ public class AddressOnlySpecUdpSocketMonitorTest extends UdpSocketMonitorTest<In
         assertThat(monitoringStoppedList.get(1), is(getSocketAddress("0.0.0.0", 20048)));
     }
 
+    @Test
+    public void shouldBeAbleToSubscribeToAddressAndPortAndInode() throws Exception
+    {
+        monitor.beginMonitoringOf(getSocketAddress("192.168.122.2", 53).getAddress(), 15294);
+
+        monitor.poll(recordingUdpSocketStatisticsHandler);
+
+        final List<MonitoredEntry> recordedEntries = recordingUdpSocketStatisticsHandler.getRecordedEntries();
+        assertThat(recordedEntries.size(), is(1));
+        assertEntry(recordedEntries.get(0), "192.168.122.2", 53, 9, 0, 0, 15294);
+    }
+
     private InetAddress getByNameOrThrow(final String host)
     {
         try

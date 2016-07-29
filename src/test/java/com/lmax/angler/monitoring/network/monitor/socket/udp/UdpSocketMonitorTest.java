@@ -147,11 +147,11 @@ public abstract class UdpSocketMonitorTest<T>
         assertEntry(recordedEntries.get(0), "127.0.0.1", 32770, 0, 0, 0, 15293);
     }
 
-    private static void assertEntry(final MonitoredEntry monitoredEntry,
+    protected static void assertEntry(final MonitoredEntry monitoredEntry,
                                     final String address,
                                     final int port,
                                     final long receiveQueueDepth,
-                                    final long transmitQueueDepth, 
+                                    final long transmitQueueDepth,
                                     final long dropCount,
                                     final long inode) throws UnknownHostException
     {

@@ -15,6 +15,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.asMatchAllSocketsSocketIdentifier;
+import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4Address;
+import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4AddressAndInode;
+import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4SocketAddress;
+import static com.lmax.angler.monitoring.network.monitor.socket.SocketIdentifier.fromInet4SocketAddressAndInode;
+
 /**
  * Monitor for reporting changes in /proc/net/udp.
  */
@@ -83,7 +89,7 @@ public final class UdpSocketMonitor
      */
     public void beginMonitoringOf(final InetSocketAddress socketAddress)
     {
-        beginMonitoringSocketIdentifier(socketAddress, SocketIdentifier.fromInet4SocketAddress(socketAddress));
+        beginMonitoringSocketIdentifier(socketAddress, fromInet4SocketAddress(socketAddress));
     }
 
     /**
@@ -95,7 +101,7 @@ public final class UdpSocketMonitor
      */
     public void endMonitoringOf(final InetSocketAddress socketAddress)
     {
-        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4SocketAddress(socketAddress));
+        endMonitoringOfSocketIdentifier(fromInet4SocketAddress(socketAddress));
     }
 
     /**
@@ -107,7 +113,7 @@ public final class UdpSocketMonitor
      */
     public void beginMonitoringOf(final InetAddress inetAddress)
     {
-        final long socketIdentifier = SocketIdentifier.fromInet4Address(inetAddress);
+        final long socketIdentifier = fromInet4Address(inetAddress);
         beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
     }
 
@@ -120,17 +126,73 @@ public final class UdpSocketMonitor
      */
     public void endMonitoringOf(final InetAddress inetAddress)
     {
-        endMonitoringOfSocketIdentifier(SocketIdentifier.fromInet4Address(inetAddress));
+        endMonitoringOfSocketIdentifier(fromInet4Address(inetAddress));
+    }
+
+    /**
+     * Register interest in a socket.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param socketAddress the socket address
+     * @param inode the socket inode
+     */
+    public void beginMonitoringOf(final InetSocketAddress socketAddress, final int inode)
+    {
+        beginMonitoringSocketIdentifier(socketAddress, fromInet4SocketAddressAndInode(socketAddress, inode));
+    }
+
+    /**
+     * De-register interest in a socket.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param socketAddress the socket address
+     * @param inode the socket inode
+     */
+    public void endMonitoringOf(final InetSocketAddress socketAddress, final int inode)
+    {
+        endMonitoringOfSocketIdentifier(fromInet4SocketAddressAndInode(socketAddress, inode));
+    }
+
+    /**
+     * Register interest in sockets listening to the specified address on any port.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param inetAddress the IP address
+     * @param inode the socket inode
+     */
+    public void beginMonitoringOf(final InetAddress inetAddress, final int inode)
+    {
+        final long socketIdentifier = fromInet4AddressAndInode(inetAddress, inode);
+        beginMonitoringSocketIdentifier(new InetSocketAddress(inetAddress, 0), socketIdentifier);
+    }
+
+    /**
+     * De-register interest in an IP address.
+     *
+     * Thread-safe, can be called from multiple threads concurrently.
+     *
+     * @param inetAddress the IP address
+     * @param inode the socket inode
+     */
+    public void endMonitoringOf(final InetAddress inetAddress, final int inode)
+    {
+        endMonitoringOfSocketIdentifier(fromInet4AddressAndInode(inetAddress, inode));
     }
 
     private void handleEntry(final UdpStatsEntry entry)
     {
         final long socketIdentifier = entry.getSocketIdentifier();
-        final long matchAllPortsSocketIdentifier = SocketIdentifier.asMatchAllSocketsSocketIdentifier(socketIdentifier);
+        final long matchAllPortsSocketIdentifier = asMatchAllSocketsSocketIdentifier(socketIdentifier);
+        final long matchAllPortsSocketInstanceIdentifier = asMatchAllSocketsSocketIdentifier(entry.getSocketInstanceIndentifier());
         final Long2ObjectHashMap<InetSocketAddress> candidateSocketsSnapshot = candidateSockets.get();
 
         if(candidateSocketsSnapshot.containsKey(socketIdentifier) ||
-           candidateSocketsSnapshot.containsKey(matchAllPortsSocketIdentifier))
+           candidateSocketsSnapshot.containsKey(matchAllPortsSocketIdentifier) ||
+           candidateSocketsSnapshot.containsKey(entry.getSocketInstanceIndentifier()) ||
+           candidateSocketsSnapshot.containsKey(matchAllPortsSocketInstanceIdentifier))
         {
             final long socketInstanceIdentifier = entry.getSocketInstanceIndentifier();
             final int port = SocketIdentifier.extractPortNumber(socketIdentifier);
@@ -142,6 +204,16 @@ public final class UdpSocketMonitor
                     // this is a match-all request
                     // need to construct socket address based on entry
                     socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketIdentifier);
+                }
+                if(socketAddress == null)
+                {
+                    // this is an inode-specific request
+                    socketAddress = candidateSocketsSnapshot.get(entry.getSocketInstanceIndentifier());
+                }
+                if(socketAddress == null)
+                {
+                    // this is an inode-specific, match-all ports request
+                    socketAddress = candidateSocketsSnapshot.get(matchAllPortsSocketInstanceIdentifier);
                 }
                 monitoredSocketInstances.put(socketInstanceIdentifier,
                         new UdpBufferStats(socketAddress.getAddress(),

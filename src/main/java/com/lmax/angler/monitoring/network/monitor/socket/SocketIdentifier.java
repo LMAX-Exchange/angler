@@ -37,6 +37,28 @@ public final class SocketIdentifier
     }
 
     /**
+     * Pack IPv4 address and socket into a long.
+     * @param socketAddress the socket address
+     * @param inode the socket inode
+     * @return the encoded value
+     */
+    public static long fromInet4SocketAddressAndInode(final InetSocketAddress socketAddress, final int inode)
+    {
+        return overlayInode(fromInet4SocketAddress(socketAddress), inode);
+    }
+
+    /**
+     * Pack IPv4 address and match-all socket flag into a long.
+     * @param inetAddress the host address
+     * @param inode the socket inode
+     * @return the encoded value
+     */
+    public static long fromInet4AddressAndInode(final InetAddress inetAddress, final int inode)
+    {
+        return overlayInode(fromInet4Address(inetAddress), inode);
+    }
+
+    /**
      * Is this socketIdentifier a match for all ports on the encoded IP address.
      * @param socketIdentifier the encoded value
      * @return whether this socketIdentifier matches all ports
@@ -88,6 +110,19 @@ public final class SocketIdentifier
         return (int) ((socketIdentifier >> 32) & 0xFFFFL);
     }
 
+    /**
+     * Generates a vaguely human-readable format for a given socket identifier.
+     * @param socketIdentifier the encoded socket identifier
+     * @return human-readable form
+     */
+    public static String toDebugString(final long socketIdentifier)
+    {
+        final int ipBits = (int) socketIdentifier;
+        final int port = extractPortNumber(socketIdentifier);
+        final int inode = (int) (socketIdentifier >> 48);
+
+        return Integer.toHexString(ipBits) + ":" + port + "/" + inode;
+    }
 
     private static void validateAddressType(final InetSocketAddress socketAddress)
     {
