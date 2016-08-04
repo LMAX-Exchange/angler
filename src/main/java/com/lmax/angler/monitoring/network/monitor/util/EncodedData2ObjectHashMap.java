@@ -167,12 +167,10 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return null;
     }
 
-
-
     @Override
     public void putAll(final Map<? extends K, ? extends V> m)
     {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
