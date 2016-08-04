@@ -114,6 +114,15 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.containsKey(KEY), is(false));
     }
 
+    @Test
+    public void shouldContainValue() throws Exception
+    {
+        map.put(KEY, VALUE);
+
+        assertThat(map.containsValue(VALUE), is(true));
+        assertThat(map.containsValue(new Object()), is(false));
+    }
+
     private static final class EncodableKey
     {
         private long value;

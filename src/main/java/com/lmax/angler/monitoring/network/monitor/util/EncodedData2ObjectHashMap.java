@@ -89,6 +89,13 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @Override
     public boolean containsValue(final Object value)
     {
+        for (int i = 0; i < values.length; i++)
+        {
+            if(value ==  values[i])
+            {
+                return true;
+            }
+        }
         return false;
     }
 
