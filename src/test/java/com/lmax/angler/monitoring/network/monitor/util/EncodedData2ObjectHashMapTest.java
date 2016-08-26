@@ -1,5 +1,6 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -139,6 +140,23 @@ public class EncodedData2ObjectHashMapTest
         assertThat(previousValue, is(nullValue()));
 
         assertThat(map.get(key), is(otherValue));
+    }
+
+    @Ignore
+    @Test
+    public void previousValuesShouldStillExistAfterResize() throws Exception
+    {
+        for(int i = 0; i < INITIAL_CAPACITY; i++)
+        {
+            map.put(new EncodableKey(i), VALUE + "_" + i);
+        }
+
+        map.put(new EncodableKey(INITIAL_CAPACITY), "otherValue");
+
+        for(int i = 0; i < INITIAL_CAPACITY; i++)
+        {
+            assertThat(map.get(new EncodableKey(i)), is(VALUE + "_" + i));
+        }
     }
 
     private static final class EncodableKey
