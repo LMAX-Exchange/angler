@@ -202,6 +202,15 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         throw new UnsupportedOperationException();
     }
 
+    // visible for testing
+    int getIndexOfKey(final K key)
+    {
+        keyBuffer.clear();
+        keyEncoder.accept(key, keyBuffer);
+        keyBuffer.flip();
+        return findKeySpaceIndex(getInitialKeySpaceIndex(key), keyBuffer);
+    }
+
     private boolean encodedKeyIsAtIndex(final int keySpaceIndex, final ByteBuffer encodedKey, final ByteBuffer searchSpace)
     {
         final int startPosition = keySpaceIndex * keyLengthInBytes;
@@ -221,9 +230,45 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     {
         nullKeyBuffer.clear();
         keySpace.position(keySpaceIndex * keyLengthInBytes);
-        // TODO need nullKey + hash check, or separate empty index indicator
         keySpace.put(nullKeyBuffer);
-        // TODO needs to compact any null keys
+        compactChain(keySpaceIndex);
+    }
+
+    private void compactChain(final int deletedIndex)
+    {
+        int nextIndexToCheck = deletedIndex;
+        int hashIndex = deletedIndex;
+
+        do
+        {
+            nextIndexToCheck = maskForCurrentCapacity(nextIndexToCheck + 1);
+            keyBuffer.clear();
+            keySpace.position(nextIndexToCheck * keyLengthInBytes);
+            keySpace.limit(keySpace.position() + keyLengthInBytes);
+            keySpace.mark();
+            keyBuffer.put(keySpace);
+            keySpace.reset();
+            keyBuffer.flip();
+
+            if (buffersAreEqual(keyBuffer, nullKeyBuffer))
+            {
+                keySpace.clear();
+                return;
+            }
+
+            if (maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer)) == hashIndex)
+            {
+                values[nextIndexToCheck - 1] = values[nextIndexToCheck];
+                values[nextIndexToCheck] = null;
+                nullKeyBuffer.clear();
+                keySpace.put(nullKeyBuffer);
+                keySpace.position(maskForCurrentCapacity(nextIndexToCheck - 1) * keyLengthInBytes);
+                keySpace.limit(keySpace.position() + keyLengthInBytes);
+                keyBuffer.rewind();
+                keySpace.put(keyBuffer);
+            }
+            keySpace.clear();
+        } while(nextIndexToCheck != deletedIndex);
     }
 
     private int findWritableIndexForKey(final int initialKeySpaceIndex, final ByteBuffer searchSpace, final ByteBuffer keyBuffer)
@@ -249,7 +294,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         while((!encodedKeyIsAtIndex(currentKeySpaceIndex, encodedKey, keySpace)))
         {
             currentKeySpaceIndex++;
-            currentKeySpaceIndex = currentKeySpaceIndex & capacity - 1;
+            currentKeySpaceIndex = maskForCurrentCapacity(currentKeySpaceIndex);
 
             if((currentKeySpaceIndex) == initialKeySpaceIndex)
             {
@@ -274,7 +319,12 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         final int hashCode = hashFunction.applyAsInt(keyBuffer);
         keyBuffer.rewind();
 
-        return (hashCode & capacity - 1);
+        return maskForCurrentCapacity(hashCode);
+    }
+
+    private int maskForCurrentCapacity(final int index)
+    {
+        return index & capacity - 1;
     }
 
     private void fillKeySpaceWithNullKey(final ByteBuffer keySpace, final int numberOfKeys)

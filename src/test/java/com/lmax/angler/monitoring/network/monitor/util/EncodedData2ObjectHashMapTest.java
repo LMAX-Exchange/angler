@@ -158,6 +158,28 @@ public class EncodedData2ObjectHashMapTest
         }
     }
 
+    @Test
+    public void shouldCompactEmptyEntriesWhenCollidingKeyIsRemoved() throws Exception
+    {
+        final EncodedData2ObjectHashMap<EncodableKey, String> map =
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> 5, NULL_KEY);
+
+        final EncodableKey keyOne = new EncodableKey(147L);
+        final EncodableKey keyTwo = new EncodableKey(37L);
+
+        map.put(keyOne, VALUE);
+        map.put(keyTwo, VALUE);
+
+        final int peekKeyOnePosition = map.getIndexOfKey(keyOne);
+        final int peekKeyTwoPosition = map.getIndexOfKey(keyTwo);
+
+        assertThat(peekKeyOnePosition, is(peekKeyTwoPosition - 1));
+
+        map.remove(keyOne);
+
+        assertThat(map.getIndexOfKey(keyTwo), is(peekKeyOnePosition));
+    }
+
     private static final class EncodableKey
     {
         private long value;
