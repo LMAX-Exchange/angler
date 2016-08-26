@@ -55,6 +55,11 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
 
         keyEncoder.accept(nullKey, nullKeyBuffer);
         fillKeySpaceWithNullKey(keySpace, capacity);
+        if(loadFactor > 1f)
+        {
+            throw new IllegalArgumentException("loadFactor must be <= 1");
+        }
+        resizeThreshold = (int) (capacity * loadFactor);
     }
 
     public EncodedData2ObjectHashMap(
@@ -138,23 +143,6 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return previous;
     }
 
-    private int findWritableIndexForKey(final int initialKeySpaceIndex, final ByteBuffer searchSpace, final ByteBuffer keyBuffer)
-    {
-        int currentKeySpaceIndex = initialKeySpaceIndex;
-        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, nullKeyBuffer, searchSpace)) &&
-                (!encodedKeyIsAtIndex(currentKeySpaceIndex, keyBuffer, searchSpace)))
-        {
-            currentKeySpaceIndex++;
-            currentKeySpaceIndex = currentKeySpaceIndex & searchSpace.capacity() - 1;
-
-            if((currentKeySpaceIndex) == initialKeySpaceIndex)
-            {
-                throw new IllegalStateException("Could not find existing or empty slot for key");
-            }
-        }
-        return currentKeySpaceIndex;
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     public V remove(final Object key)
@@ -199,19 +187,19 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @Override
     public Set<K> keySet()
     {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Collection<V> values()
     {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<Entry<K, V>> entrySet()
     {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     private boolean encodedKeyIsAtIndex(final int keySpaceIndex, final ByteBuffer encodedKey, final ByteBuffer searchSpace)
@@ -236,6 +224,23 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         // TODO need nullKey + hash check, or separate empty index indicator
         keySpace.put(nullKeyBuffer);
         // TODO needs to compact any null keys
+    }
+
+    private int findWritableIndexForKey(final int initialKeySpaceIndex, final ByteBuffer searchSpace, final ByteBuffer keyBuffer)
+    {
+        int currentKeySpaceIndex = initialKeySpaceIndex;
+        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, nullKeyBuffer, searchSpace)) &&
+                (!encodedKeyIsAtIndex(currentKeySpaceIndex, keyBuffer, searchSpace)))
+        {
+            currentKeySpaceIndex++;
+            currentKeySpaceIndex = currentKeySpaceIndex & searchSpace.capacity() - 1;
+
+            if((currentKeySpaceIndex) == initialKeySpaceIndex)
+            {
+                throw new IllegalStateException("Could not find existing or empty slot for key");
+            }
+        }
+        return currentKeySpaceIndex;
     }
 
     private int findKeySpaceIndex(final int initialKeySpaceIndex, final ByteBuffer encodedKey)
@@ -285,7 +290,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
 
     private void increaseSizeIfRequired()
     {
-        if(size >= loadFactor * capacity)
+        if(size >= resizeThreshold)
         {
             final int newKeySpaceCapacity = keySpace.capacity() * 2;
             final int newMapCapacity = capacity * 2;
@@ -319,6 +324,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             capacity = newMapCapacity;
             keySpace = increasedKeySpace;
             values = newValues;
+            resizeThreshold = (int) (capacity * loadFactor);
         }
     }
 
