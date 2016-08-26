@@ -39,7 +39,8 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             final float loadFactor,
             final int keyLengthInBytes,
             final BiConsumer<K, ByteBuffer> keyEncoder,
-            final ToIntBiFunction<K, ByteBuffer> hashFunction)
+            final ToIntBiFunction<K, ByteBuffer> hashFunction,
+            final K nullKey)
     {
         this.capacity = BitUtil.findNextPositivePowerOfTwo(initialCapacity);
         this.loadFactor = loadFactor;
@@ -50,15 +51,19 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         this.keySpace = ByteBuffer.allocate(keyLengthInBytes * capacity);
         this.values = new Object[capacity];
         this.hashFunction = hashFunction;
+
+        keyEncoder.accept(nullKey, nullKeyBuffer);
+        fillKeySpaceWithNullKey();
     }
 
     public EncodedData2ObjectHashMap(
             final int initialCapacity,
             final float loadFactor,
             final int keyLengthInBytes,
-            final BiConsumer<K, ByteBuffer> keyEncoder)
+            final BiConsumer<K, ByteBuffer> keyEncoder,
+            final K nullKey)
     {
-        this(initialCapacity, loadFactor, keyLengthInBytes, keyEncoder, EncodedData2ObjectHashMap::defaultHash);
+        this(initialCapacity, loadFactor, keyLengthInBytes, keyEncoder, EncodedData2ObjectHashMap::defaultHash, nullKey);
     }
 
     @Override
@@ -247,6 +252,17 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         keyBuffer.rewind();
 
         return (hashCode & capacity - 1);
+    }
+
+    private void fillKeySpaceWithNullKey()
+    {
+        for(int i = 0; i < capacity; i++)
+        {
+            nullKeyBuffer.rewind();
+            keySpace.position(i * keyLengthInBytes);
+            keySpace.put(nullKeyBuffer);
+        }
+        keySpace.clear();
     }
 
     private static <K> int defaultHash(final K key, final ByteBuffer keyBuffer)

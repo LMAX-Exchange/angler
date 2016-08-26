@@ -1,5 +1,6 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -11,11 +12,12 @@ import static org.junit.Assert.assertThat;
 public class EncodedData2ObjectHashMapTest
 {
     private static final String VALUE = "foobar";
-    private static final EncodableKey KEY = new EncodableKey(17L);
+    private static final EncodableKey KEY = new EncodableKey(37L);
+    private static final EncodableKey NULL_KEY = new EncodableKey(Long.MIN_VALUE);
+    private static final int INITIAL_CAPACITY = 16;
 
     private final EncodedData2ObjectHashMap<EncodableKey, String> map =
-            new EncodedData2ObjectHashMap<>(16, 1f, 8, this::encodeKey);
-
+            new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, NULL_KEY);
 
     @Test
     public void shouldContainKeyValuePair() throws Exception
@@ -62,9 +64,9 @@ public class EncodedData2ObjectHashMapTest
     public void shouldHandleHashCollision() throws Exception
     {
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
-                new EncodedData2ObjectHashMap<>(16, 1f, 8, this::encodeKey, (k, buffer) -> 42);
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (k, buffer) -> 42, NULL_KEY);
 
-        final EncodableKey otherKey = new EncodableKey(37L);
+        final EncodableKey otherKey = new EncodableKey(147L);
         final String otherValue = "other";
 
         map.put(KEY, VALUE);
@@ -75,6 +77,24 @@ public class EncodedData2ObjectHashMapTest
 
         assertThat(map.containsKey(otherKey), is(true));
         assertThat(map.get(otherKey), is(otherValue));
+    }
+
+    @Ignore
+    @Test
+    public void shouldIncreaseInSizeWhenNecessary() throws Exception
+    {
+        for(int i = 0; i < INITIAL_CAPACITY; i++)
+        {
+            map.put(new EncodableKey(i), VALUE);
+        }
+
+        final EncodableKey key = new EncodableKey(INITIAL_CAPACITY);
+        final String otherValue = "otherValue";
+        final String previousValue = map.put(key, otherValue);
+
+        assertThat(previousValue, is(nullValue()));
+
+        assertThat(map.get(key), is(otherValue));
     }
 
     private static final class EncodableKey
