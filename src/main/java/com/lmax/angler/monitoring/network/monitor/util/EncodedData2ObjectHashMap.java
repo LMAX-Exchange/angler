@@ -3,6 +3,7 @@ package com.lmax.angler.monitoring.network.monitor.util;
 import org.agrona.BitUtil;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +76,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @Override
     public boolean isEmpty()
     {
-        return size != 0;
+        return size == 0;
     }
 
     @Override
@@ -93,6 +94,13 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @Override
     public boolean containsValue(final Object value)
     {
+        for (int i = 0; i < values.length; i++)
+        {
+            if(value ==  values[i])
+            {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -164,18 +172,24 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return null;
     }
 
-
-
     @Override
     public void putAll(final Map<? extends K, ? extends V> m)
     {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void clear()
     {
-
+        Arrays.fill(values, null);
+        for(int i = 0; i < keySpace.capacity() / keyLengthInBytes; i++)
+        {
+            keySpace.position(i * keyLengthInBytes);
+            nullKeyBuffer.clear();
+            keySpace.put(nullKeyBuffer);
+        }
+        keySpace.clear();
+        size = 0;
     }
 
     @Override

@@ -79,6 +79,52 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.get(otherKey), is(otherValue));
     }
 
+    @Test
+    public void shouldTrackSize() throws Exception
+    {
+        assertThat(map.size(), is(0));
+
+        map.put(KEY, VALUE);
+
+        assertThat(map.size(), is(1));
+
+        map.put(new EncodableKey(23L), VALUE);
+
+        assertThat(map.size(), is(2));
+
+        map.remove(KEY);
+
+        assertThat(map.size(), is(1));
+    }
+
+    @Test
+    public void shouldNotBeEmptyAfterInsertion() throws Exception
+    {
+        map.put(KEY, VALUE);
+
+        assertThat(map.isEmpty(), is(false));
+    }
+
+    @Test
+    public void shouldBeEmptyAfterClear() throws Exception
+    {
+        map.put(KEY, VALUE);
+
+        map.clear();
+
+        assertThat(map.isEmpty(), is(true));
+        assertThat(map.containsKey(KEY), is(false));
+    }
+
+    @Test
+    public void shouldContainValue() throws Exception
+    {
+        map.put(KEY, VALUE);
+
+        assertThat(map.containsValue(VALUE), is(true));
+        assertThat(map.containsValue(new Object()), is(false));
+    }
+
     @Ignore
     @Test
     public void shouldIncreaseInSizeWhenNecessary() throws Exception
