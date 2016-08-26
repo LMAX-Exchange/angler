@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -125,7 +124,6 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.containsValue(new Object()), is(false));
     }
 
-    @Ignore
     @Test
     public void shouldIncreaseInSizeWhenNecessary() throws Exception
     {

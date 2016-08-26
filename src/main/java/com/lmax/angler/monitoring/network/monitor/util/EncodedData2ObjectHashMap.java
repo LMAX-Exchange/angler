@@ -54,7 +54,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         this.hashFunction = hashFunction;
 
         keyEncoder.accept(nullKey, nullKeyBuffer);
-        fillKeySpaceWithNullKey();
+        fillKeySpaceWithNullKey(keySpace, capacity);
     }
 
     public EncodedData2ObjectHashMap(
@@ -128,29 +128,31 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         increaseSizeIfRequired();
 
         final int initialKeySpaceIndex = getInitialKeySpaceIndex(key);
-        final int existingOrEmptyKeySpaceIndex;
+        final int existingOrEmptyKeySpaceIndex = findWritableIndexForKey(initialKeySpaceIndex, keySpace, keyBuffer);
 
+        this.keySpace.position(existingOrEmptyKeySpaceIndex * keyLengthInBytes);
+        this.keySpace.put(keyBuffer);
+        final V previous = (V) values[existingOrEmptyKeySpaceIndex];
+        values[existingOrEmptyKeySpaceIndex] = value;
+        size++;
+        return previous;
+    }
+
+    private int findWritableIndexForKey(final int initialKeySpaceIndex, final ByteBuffer searchSpace, final ByteBuffer keyBuffer)
+    {
         int currentKeySpaceIndex = initialKeySpaceIndex;
-        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, nullKeyBuffer)) &&
-                (!encodedKeyIsAtIndex(currentKeySpaceIndex, keyBuffer)))
+        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, nullKeyBuffer, searchSpace)) &&
+                (!encodedKeyIsAtIndex(currentKeySpaceIndex, keyBuffer, searchSpace)))
         {
             currentKeySpaceIndex++;
-            currentKeySpaceIndex = currentKeySpaceIndex & capacity - 1;
+            currentKeySpaceIndex = currentKeySpaceIndex & searchSpace.capacity() - 1;
 
             if((currentKeySpaceIndex) == initialKeySpaceIndex)
             {
                 throw new IllegalStateException("Could not find existing or empty slot for key");
             }
         }
-
-        existingOrEmptyKeySpaceIndex = currentKeySpaceIndex;
-
-        keySpace.position(existingOrEmptyKeySpaceIndex * keyLengthInBytes);
-        keySpace.put(keyBuffer);
-        final V previous = (V) values[existingOrEmptyKeySpaceIndex];
-        values[existingOrEmptyKeySpaceIndex] = value;
-        size++;
-        return previous;
+        return currentKeySpaceIndex;
     }
 
     @Override
@@ -212,12 +214,12 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return null;
     }
 
-    private boolean encodedKeyIsAtIndex(final int keySpaceIndex, final ByteBuffer encodedKey)
+    private boolean encodedKeyIsAtIndex(final int keySpaceIndex, final ByteBuffer encodedKey, final ByteBuffer searchSpace)
     {
         final int startPosition = keySpaceIndex * keyLengthInBytes;
         for(int i = 0; i < keyLengthInBytes; i++)
         {
-            if(keySpace.get(startPosition + i) != encodedKey.get(i))
+            if(searchSpace.get(startPosition + i) != encodedKey.get(i))
             {
                 encodedKey.rewind();
                 return false;
@@ -239,7 +241,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     private int findKeySpaceIndex(final int initialKeySpaceIndex, final ByteBuffer encodedKey)
     {
         int currentKeySpaceIndex = initialKeySpaceIndex;
-        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, encodedKey)))
+        while((!encodedKeyIsAtIndex(currentKeySpaceIndex, encodedKey, keySpace)))
         {
             currentKeySpaceIndex++;
             currentKeySpaceIndex = currentKeySpaceIndex & capacity - 1;
@@ -270,9 +272,9 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         return (hashCode & capacity - 1);
     }
 
-    private void fillKeySpaceWithNullKey()
+    private void fillKeySpaceWithNullKey(final ByteBuffer keySpace, final int numberOfKeys)
     {
-        for(int i = 0; i < capacity; i++)
+        for(int i = 0; i < numberOfKeys; i++)
         {
             nullKeyBuffer.rewind();
             keySpace.position(i * keyLengthInBytes);
@@ -285,13 +287,55 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     {
         if(size >= loadFactor * capacity)
         {
-            ByteBuffer increasedKeySpace = ByteBuffer.allocate(keySpace.capacity() * 2);
+            final int newKeySpaceCapacity = keySpace.capacity() * 2;
+            final int newMapCapacity = capacity * 2;
+            final ByteBuffer increasedKeySpace = ByteBuffer.allocate(newKeySpaceCapacity);
+            fillKeySpaceWithNullKey(increasedKeySpace, newMapCapacity);
+            final Object[] newValues = new Object[newMapCapacity];
 
+            for(int i = 0; i < capacity; i++)
+            {
+                keySpace.position(i * keyLengthInBytes);
+                keySpace.limit(keySpace.position() + keyLengthInBytes);
+                keyBuffer.clear();
+                keyBuffer.put(keySpace);
 
-            // double keyspace,
-            // rehash all keys
-            // fix up pointers
+                keyBuffer.flip();
+                if(buffersAreEqual(keyBuffer, nullKeyBuffer))
+                {
+                    continue;
+                }
+                final int hashCode = hashFunction.applyAsInt(keyBuffer);
+                final int initialKeySpaceIndex = (hashCode & newMapCapacity - 1);
+                final int existingOrEmptyKeySpaceIndex = findWritableIndexForKey(initialKeySpaceIndex, increasedKeySpace, keyBuffer);
+
+                increasedKeySpace.position(existingOrEmptyKeySpaceIndex * keyLengthInBytes);
+                increasedKeySpace.put(keyBuffer);
+
+                newValues[existingOrEmptyKeySpaceIndex] = values[i];
+            }
+
+            capacity = newMapCapacity;
+            keySpace = increasedKeySpace;
+            values = newValues;
         }
+    }
+
+    private static boolean buffersAreEqual(final ByteBuffer a, final ByteBuffer b)
+    {
+        if(a.capacity() != b.capacity())
+        {
+            return false;
+        }
+        for(int i = 0; i < a.capacity(); i++)
+        {
+            if(a.get(i) != b.get(i))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static int defaultHash(final ByteBuffer keyBuffer)
