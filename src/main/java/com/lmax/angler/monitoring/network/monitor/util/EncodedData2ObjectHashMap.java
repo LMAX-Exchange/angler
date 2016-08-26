@@ -306,6 +306,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
                     continue;
                 }
                 final int hashCode = hashFunction.applyAsInt(keyBuffer);
+                keyBuffer.rewind();
                 final int initialKeySpaceIndex = (hashCode & newMapCapacity - 1);
                 final int existingOrEmptyKeySpaceIndex = findWritableIndexForKey(initialKeySpaceIndex, increasedKeySpace, keyBuffer);
 
