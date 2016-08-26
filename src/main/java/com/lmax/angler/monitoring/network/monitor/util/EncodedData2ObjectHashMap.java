@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.ToIntBiFunction;
+import java.util.function.ToIntFunction;
 
 /**
  * Primarily copied from Agrona Long2ObjectHashMap, with scope for arbitrarily long keys.
@@ -27,7 +27,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     private final ByteBuffer nullKeyBuffer;
     private final float loadFactor;
     private final BiConsumer<K, ByteBuffer> keyEncoder;
-    private final ToIntBiFunction<K, ByteBuffer> hashFunction;
+    private final ToIntFunction<ByteBuffer> hashFunction;
 
     private ByteBuffer keySpace;
     private Object[] values;
@@ -40,7 +40,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             final float loadFactor,
             final int keyLengthInBytes,
             final BiConsumer<K, ByteBuffer> keyEncoder,
-            final ToIntBiFunction<K, ByteBuffer> hashFunction,
+            final ToIntFunction<ByteBuffer> hashFunction,
             final K nullKey)
     {
         this.capacity = BitUtil.findNextPositivePowerOfTwo(initialCapacity);
@@ -125,6 +125,8 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     @SuppressWarnings("unchecked")
     public V put(final K key, final V value)
     {
+        increaseSizeIfRequired();
+
         final int initialKeySpaceIndex = getInitialKeySpaceIndex(key);
         final int existingOrEmptyKeySpaceIndex;
 
@@ -262,7 +264,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         }
 
         keyBuffer.flip();
-        final int hashCode = hashFunction.applyAsInt(key, keyBuffer);
+        final int hashCode = hashFunction.applyAsInt(keyBuffer);
         keyBuffer.rewind();
 
         return (hashCode & capacity - 1);
@@ -279,7 +281,20 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         keySpace.clear();
     }
 
-    private static <K> int defaultHash(final K key, final ByteBuffer keyBuffer)
+    private void increaseSizeIfRequired()
+    {
+        if(size >= loadFactor * capacity)
+        {
+            ByteBuffer increasedKeySpace = ByteBuffer.allocate(keySpace.capacity() * 2);
+
+
+            // double keyspace,
+            // rehash all keys
+            // fix up pointers
+        }
+    }
+
+    private static int defaultHash(final ByteBuffer keyBuffer)
     {
         int hashCode = 0;
         while(keyBuffer.remaining() > 3)

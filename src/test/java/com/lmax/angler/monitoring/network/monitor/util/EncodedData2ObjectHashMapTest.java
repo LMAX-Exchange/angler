@@ -64,7 +64,7 @@ public class EncodedData2ObjectHashMapTest
     public void shouldHandleHashCollision() throws Exception
     {
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
-                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (k, buffer) -> 42, NULL_KEY);
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> 42, NULL_KEY);
 
         final EncodableKey otherKey = new EncodableKey(147L);
         final String otherValue = "other";
