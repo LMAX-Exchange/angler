@@ -26,7 +26,7 @@ public class EncodedData2ObjectHashMapFuzzTest
 {
     private final EncodedData2ObjectHashMap<EncodableKey, String> map;
     private final Long2ObjectHashMap<String> comparison;
-    private final long seed = System.nanoTime();
+    private final long seed = 29095236049802L;
     private final Random random = new Random(seed);
     private final int numberOfElements;
 

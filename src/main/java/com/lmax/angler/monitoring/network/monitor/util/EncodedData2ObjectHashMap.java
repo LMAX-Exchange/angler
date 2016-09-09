@@ -263,6 +263,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             if ((index < hash && (hash <= deletedIndex || deletedIndex <= index)) ||
                     (hash <= deletedIndex && deletedIndex <= index))
             {
+                keySpace.clear();
                 keyBuffer.rewind();
                 keySpace.position(deletedIndex * keyLengthInBytes);
                 keySpace.limit(keySpace.position() + keyLengthInBytes);
