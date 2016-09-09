@@ -213,6 +213,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
 
     private boolean encodedKeyIsAtIndex(final int keySpaceIndex, final ByteBuffer encodedKey, final ByteBuffer searchSpace)
     {
+        searchSpace.clear();
         final int startPosition = keySpaceIndex * keyLengthInBytes;
         for(int i = 0; i < keyLengthInBytes; i++)
         {
@@ -234,41 +235,56 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         compactChain(keySpaceIndex);
     }
 
-    private void compactChain(final int deletedIndex)
+    private void compactChain(final int initialDeletedIndex)
     {
-        int nextIndexToCheck = deletedIndex;
+        int deletedIndex = initialDeletedIndex;
 
-        do
+        final int mask = values.length - 1;
+        int index = deletedIndex;
+        while (true)
         {
-            nextIndexToCheck = maskForCurrentCapacity(nextIndexToCheck + 1);
+            keySpace.clear();
+            index = ++index & mask;
+
+            if (null == values[index])
+            {
+                break;
+            }
             keyBuffer.clear();
-            keySpace.position(nextIndexToCheck * keyLengthInBytes);
+            keySpace.position(index * keyLengthInBytes);
             keySpace.limit(keySpace.position() + keyLengthInBytes);
             keySpace.mark();
             keyBuffer.put(keySpace);
             keySpace.reset();
             keyBuffer.flip();
 
-            if (buffersAreEqual(keyBuffer, nullKeyBuffer))
-            {
-                keySpace.clear();
-                return;
-            }
+            final int hash = maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer));
 
-            final int indexForKey = maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer));
-            if (indexForKey >= deletedIndex && indexForKey < nextIndexToCheck)
+            if ((index < hash && (hash <= deletedIndex || deletedIndex <= index)) ||
+                    (hash <= deletedIndex && deletedIndex <= index))
             {
-                values[nextIndexToCheck - 1] = values[nextIndexToCheck];
-                values[nextIndexToCheck] = null;
-                nullKeyBuffer.clear();
-                keySpace.put(nullKeyBuffer);
-                keySpace.position(maskForCurrentCapacity(nextIndexToCheck - 1) * keyLengthInBytes);
-                keySpace.limit(keySpace.position() + keyLengthInBytes);
                 keyBuffer.rewind();
+                keySpace.position(deletedIndex * keyLengthInBytes);
+                keySpace.limit(keySpace.position() + keyLengthInBytes);
+                keySpace.mark();
                 keySpace.put(keyBuffer);
+                keySpace.reset();
+                keySpace.clear();
+
+                nullKeyBuffer.rewind();
+                keySpace.position(index * keyLengthInBytes);
+                keySpace.limit(keySpace.position() + keyLengthInBytes);
+                keySpace.mark();
+                keySpace.put(nullKeyBuffer);
+                keySpace.reset();
+
+                values[deletedIndex] = values[index];
+
+                values[index] = null;
+                deletedIndex = index;
             }
-            keySpace.clear();
-        } while(nextIndexToCheck != deletedIndex);
+        }
+        keySpace.clear();
     }
 
     private int findWritableIndexForKey(final int initialKeySpaceIndex, final ByteBuffer searchSpace, final ByteBuffer keyBuffer)

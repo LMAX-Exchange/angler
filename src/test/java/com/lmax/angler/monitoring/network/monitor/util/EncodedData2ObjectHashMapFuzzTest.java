@@ -6,13 +6,18 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -39,34 +44,8 @@ public class EncodedData2ObjectHashMapFuzzTest
     {
         return Arrays.asList(new Object[][]
                 {
-                { 2, 0.5f, 37 }, { 4, 0.6f, 23497 }, { 16, 0.1f, 16 }, { 64, 0.2222f, 883 }, { 4096, 0.3f, 65555 }
+                { 2, 0.5f, 37 }, { 4, 0.6f, 2347 }, { 16, 0.1f, 16 }, { 64, 0.2222f, 883 }, { 2048, 0.3f, 16555 }
         });
-    }
-
-    @Test
-    public void shouldWorkWithLongMap() throws Exception
-    {
-        try
-        {
-            final List<EncodableKey> keyList = new ArrayList<>();
-            for (int i = 0; i < numberOfElements; i++)
-            {
-                final EncodableKey e = new EncodableKey(Math.abs(random.nextLong()));
-                keyList.add(e);
-                comparison.put(e.value, Long.toString(e.value));
-            }
-
-            keyList.forEach(e ->
-            {
-                assertThat(failureMessage("Expected map to contain key " + e), comparison.containsKey(e.value), is(true));
-            });
-        }
-        catch(RuntimeException e)
-        {
-            e.printStackTrace();
-            fail(failureMessage(e.getMessage()));
-        }
-
     }
 
     @Test
@@ -74,13 +53,10 @@ public class EncodedData2ObjectHashMapFuzzTest
     {
         try
         {
-            final List<EncodableKey> keyList = new ArrayList<>();
-            for (int i = 0; i < numberOfElements; i++)
-            {
-                final EncodableKey e = new EncodableKey(Math.abs(random.nextLong()));
-                keyList.add(e);
+            final List<EncodableKey> keyList = generateKeyList(numberOfElements);
+            keyList.forEach(e -> {
                 map.put(e, Long.toString(e.value));
-            }
+            });
 
             keyList.forEach(e ->
             {
@@ -92,6 +68,46 @@ public class EncodedData2ObjectHashMapFuzzTest
             e.printStackTrace();
             fail(failureMessage(e.getMessage()));
         }
+    }
+
+    @Test
+    public void shouldRemoveElements() throws Exception
+    {
+        try
+        {
+            final List<EncodableKey> keyList = generateKeyList(numberOfElements);
+            keyList.forEach(e -> {
+                map.put(e, Long.toString(e.value));
+                comparison.put(e.value, Long.toString(e.value));
+            });
+
+            Collections.shuffle(keyList, random);
+
+            keyList.forEach(e ->
+            {
+                assertThat(failureMessage("Expected comparison to contain a value for " + e), comparison.remove(e.value), is(not(nullValue())));
+                assertThat(failureMessage("Expected comparison to not contain key " + e), comparison.containsKey(e.value), is(false));
+
+                assertThat(failureMessage("Expected map to contain a value for " + e), map.remove(e), is(not(nullValue())));
+                assertThat(failureMessage("Expected map to not contain key " + e), map.containsKey(e), is(false));
+            });
+        }
+        catch(RuntimeException e)
+        {
+            e.printStackTrace();
+            fail(failureMessage(e.getMessage()));
+        }
+    }
+
+    private List<EncodableKey> generateKeyList(final int numberOfKeys)
+    {
+        final Set<Long> uniqueKeys = new HashSet<>();
+        while(uniqueKeys.size() < numberOfKeys)
+        {
+            uniqueKeys.add(Math.abs(random.nextLong()));
+        }
+
+        return uniqueKeys.stream().map(EncodableKey::new).collect(Collectors.toList());
     }
 
     private String failureMessage(final String input)
