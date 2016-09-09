@@ -55,9 +55,9 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
 
         keyEncoder.accept(nullKey, nullKeyBuffer);
         fillKeySpaceWithNullKey(keySpace, capacity);
-        if(loadFactor > 1f)
+        if(loadFactor >= 1f)
         {
-            throw new IllegalArgumentException("loadFactor must be <= 1");
+            throw new IllegalArgumentException("loadFactor must be < 1");
         }
         resizeThreshold = (int) (capacity * loadFactor);
     }
@@ -237,7 +237,6 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     private void compactChain(final int deletedIndex)
     {
         int nextIndexToCheck = deletedIndex;
-        int hashIndex = deletedIndex;
 
         do
         {
@@ -257,7 +256,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
             }
 
             final int indexForKey = maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer));
-            if (indexForKey >= hashIndex && indexForKey < nextIndexToCheck)
+            if (indexForKey >= deletedIndex && indexForKey < nextIndexToCheck)
             {
                 values[nextIndexToCheck - 1] = values[nextIndexToCheck];
                 values[nextIndexToCheck] = null;
@@ -279,7 +278,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
                 (!encodedKeyIsAtIndex(currentKeySpaceIndex, keyBuffer, searchSpace)))
         {
             currentKeySpaceIndex++;
-            currentKeySpaceIndex = currentKeySpaceIndex & searchSpace.capacity() - 1;
+            currentKeySpaceIndex = maskForCurrentCapacity(currentKeySpaceIndex);
 
             if((currentKeySpaceIndex) == initialKeySpaceIndex)
             {
