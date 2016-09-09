@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -181,14 +180,13 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.getIndexOfKey(keyTwo), is(peekKeyOnePosition));
     }
 
-    @Ignore
     @Test
     public void shouldCompactEmptyEntriesWhenDifferentKeyHashHasBeenOccupiedByPreviousEntry() throws Exception
     {
         // map that will hash even keys to index 5, odd keys to index 6
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
                 new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> {
-                    if(buffer.get(7) % 2 == 0)
+                    if(buffer.getLong(0) % 2 == 0)
                     {
                         return 5;
                     }

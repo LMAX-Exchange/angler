@@ -256,7 +256,8 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
                 return;
             }
 
-            if (maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer)) == hashIndex)
+            final int indexForKey = maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer));
+            if (indexForKey >= hashIndex && indexForKey < nextIndexToCheck)
             {
                 values[nextIndexToCheck - 1] = values[nextIndexToCheck];
                 values[nextIndexToCheck] = null;
