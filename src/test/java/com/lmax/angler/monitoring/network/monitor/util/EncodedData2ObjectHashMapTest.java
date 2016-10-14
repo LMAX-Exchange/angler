@@ -16,7 +16,7 @@ public class EncodedData2ObjectHashMapTest
     private static final int INITIAL_CAPACITY = 16;
 
     private final EncodedData2ObjectHashMap<EncodableKey, String> map =
-            new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, NULL_KEY);
+            new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 0.9f, 8, this::encodeKey, NULL_KEY);
 
     @Test
     public void shouldContainKeyValuePair() throws Exception
@@ -63,7 +63,7 @@ public class EncodedData2ObjectHashMapTest
     public void shouldHandleHashCollision() throws Exception
     {
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
-                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> 42, NULL_KEY);
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 0.9f, 8, this::encodeKey, (buffer) -> 42, NULL_KEY);
 
         final EncodableKey otherKey = new EncodableKey(147L);
         final String otherValue = "other";
@@ -162,7 +162,7 @@ public class EncodedData2ObjectHashMapTest
     public void shouldCompactEmptyEntriesWhenCollidingKeyIsRemoved() throws Exception
     {
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
-                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> 5, NULL_KEY);
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 0.9f, 8, this::encodeKey, (buffer) -> 5, NULL_KEY);
 
         final EncodableKey keyOne = new EncodableKey(147L);
         final EncodableKey keyTwo = new EncodableKey(37L);
@@ -185,8 +185,8 @@ public class EncodedData2ObjectHashMapTest
     {
         // map that will hash even keys to index 5, odd keys to index 6
         final EncodedData2ObjectHashMap<EncodableKey, String> map =
-                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 1f, 8, this::encodeKey, (buffer) -> {
-                    if(buffer.get(7) % 2 == 0)
+                new EncodedData2ObjectHashMap<>(INITIAL_CAPACITY, 0.9f, 8, this::encodeKey, (buffer) -> {
+                    if(buffer.getLong(0) % 2 == 0)
                     {
                         return 5;
                     }
