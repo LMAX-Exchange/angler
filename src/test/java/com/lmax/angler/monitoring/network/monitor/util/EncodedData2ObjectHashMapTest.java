@@ -1,6 +1,5 @@
 package com.lmax.angler.monitoring.network.monitor.util;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -181,7 +180,6 @@ public class EncodedData2ObjectHashMapTest
         assertThat(map.getIndexOfKey(keyTwo), is(peekKeyOnePosition));
     }
 
-    @Ignore
     @Test
     public void shouldCompactEmptyEntriesWhenDifferentKeyHashHasBeenOccupiedByPreviousEntry() throws Exception
     {
@@ -198,9 +196,9 @@ public class EncodedData2ObjectHashMapTest
                     }
                 }, NULL_KEY);
 
-        final EncodableKey evenKeyOne = new EncodableKey(4L);
-        final EncodableKey evenKeyTwo = new EncodableKey(8L);
-        final EncodableKey oddKey = new EncodableKey(9L);
+        final EncodableKey keyA = new EncodableKey(4L);
+        final EncodableKey keyB = new EncodableKey(8L);
+        final EncodableKey keyC = new EncodableKey(9L);
         final String evenValueOne = VALUE + 4;
         final String evenValueTwo = VALUE + 8;
         final String oddValue = VALUE + 9;
@@ -210,27 +208,27 @@ public class EncodedData2ObjectHashMapTest
         // key B -> hashes to index 5, inserted at 6
         // key C -> hashes to index 6, inserted at 7
 
-        map.put(evenKeyOne, evenValueOne);
-        map.put(evenKeyTwo, evenValueTwo);
-        map.put(oddKey, oddValue);
+        map.put(keyA, evenValueOne);
+        map.put(keyB, evenValueTwo);
+        map.put(keyC, oddValue);
 
-        assertThat(map.getIndexOfKey(evenKeyOne), is(5));
-        assertThat(map.get(evenKeyOne), is(evenValueOne));
-        assertThat(map.getIndexOfKey(evenKeyTwo), is(6));
-        assertThat(map.get(evenKeyTwo), is(evenValueTwo));
-        assertThat(map.getIndexOfKey(oddKey), is(7));
-        assertThat(map.get(oddKey), is(oddValue));
+        assertThat(map.getIndexOfKey(keyA), is(5));
+        assertThat(map.get(keyA), is(evenValueOne));
+        assertThat(map.getIndexOfKey(keyB), is(6));
+        assertThat(map.get(keyB), is(evenValueTwo));
+        assertThat(map.getIndexOfKey(keyC), is(7));
+        assertThat(map.get(keyC), is(oddValue));
 
         // remove key A
-        assertThat(map.remove(evenKeyOne), is(evenValueOne));
+        assertThat(map.remove(keyA), is(evenValueOne));
 
         // expected map state:
         // key B -> moved to index 5
         // key C -> moved to index 6
-        assertThat(map.getIndexOfKey(evenKeyTwo), is(5));
-        assertThat(map.get(evenKeyTwo), is(evenValueTwo));
-        assertThat(map.getIndexOfKey(oddKey), is(6));
-        assertThat(map.get(oddKey), is(oddValue));
+        assertThat(map.getIndexOfKey(keyB), is(5));
+        assertThat(map.get(keyB), is(evenValueTwo));
+        assertThat(map.getIndexOfKey(keyC), is(6));
+        assertThat(map.get(keyC), is(oddValue));
     }
 
     private static final class EncodableKey

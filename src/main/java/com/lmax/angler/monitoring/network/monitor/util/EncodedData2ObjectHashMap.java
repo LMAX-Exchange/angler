@@ -150,6 +150,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
         final K typedKey = (K) key;
         keyBuffer.clear();
         keyEncoder.accept(typedKey, keyBuffer);
+
         final int initialKeySpaceIndex = getInitialKeySpaceIndex(typedKey);
         final int actualKeySpaceIndex = findKeySpaceIndex(initialKeySpaceIndex, keyBuffer);
         if(actualKeySpaceIndex != KEY_NOT_FOUND)
@@ -237,7 +238,6 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
     private void compactChain(final int deletedIndex)
     {
         int nextIndexToCheck = deletedIndex;
-        int hashIndex = deletedIndex;
 
         do
         {
@@ -256,7 +256,8 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
                 return;
             }
 
-            if (maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer)) == hashIndex)
+            final int indexForCurrentKey = maskForCurrentCapacity(hashFunction.applyAsInt(keyBuffer));
+            if (indexForCurrentKey < nextIndexToCheck)
             {
                 values[nextIndexToCheck - 1] = values[nextIndexToCheck];
                 values[nextIndexToCheck] = null;
@@ -267,6 +268,7 @@ public final class EncodedData2ObjectHashMap<K, V> implements Map<K, V>
                 keyBuffer.rewind();
                 keySpace.put(keyBuffer);
             }
+
             keySpace.clear();
         } while(nextIndexToCheck != deletedIndex);
     }
