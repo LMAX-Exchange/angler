@@ -13,7 +13,7 @@ public final class MonitoredSockets<T extends DescribableSocket>
     private final Long2ObjectHashMap<T> monitoredSocketInstances = new Long2ObjectHashMap<>();
     private final SocketMonitoringLifecycleListener lifecycleListener;
     private final SocketDescriptor socketDescriptor = new SocketDescriptor();
-    private final LongHashSet keysForRemoval = new LongHashSet(Long.MIN_VALUE);
+    private final LongHashSet keysForRemoval = new LongHashSet();
 
     public MonitoredSockets(final SocketMonitoringLifecycleListener lifecycleListener)
     {

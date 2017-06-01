@@ -40,8 +40,8 @@ public final class ExampleApplication implements SocketMonitoringLifecycleListen
 
     private void run() throws Exception
     {
-        try(final DatagramChannel c0 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLocalHost(), 32769));
-            final DatagramChannel c1 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLocalHost(), 32770));
+        try(final DatagramChannel c0 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLoopbackAddress(), 12769));
+            final DatagramChannel c1 = createListeningChannelOnPort(new InetSocketAddress(InetAddress.getLoopbackAddress(), 12770));
             final DatagramChannel c2 = multicastListener(InetAddress.getByName("239.192.45.3"), 5000))
         {
             Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::pollMonitors, 0L, 1L, TimeUnit.SECONDS);

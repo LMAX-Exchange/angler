@@ -17,9 +17,9 @@ public final class SocketOwnedByCurrentProcessFilter implements TcpSocketStatist
     private final Consumer<LongHashSet> socketInodeRetriever;
 
     private final LongHashSet socketInodesOwnedByThisProcess =
-            new LongHashSet(INITIAL_SOCKET_INODE_CACHE_SIZE, Long.MIN_VALUE);
+            new LongHashSet(INITIAL_SOCKET_INODE_CACHE_SIZE);
     private final LongHashSet socketInodesNotOwnedByThisProcess =
-            new LongHashSet(INITIAL_SOCKET_INODE_CACHE_SIZE, Long.MIN_VALUE);
+            new LongHashSet(INITIAL_SOCKET_INODE_CACHE_SIZE);
 
     public SocketOwnedByCurrentProcessFilter(final TcpSocketStatisticsHandler delegate,
                                              final Consumer<LongHashSet> socketInodeRetriever)
