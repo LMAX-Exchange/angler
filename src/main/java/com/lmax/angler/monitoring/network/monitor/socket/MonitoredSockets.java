@@ -2,7 +2,7 @@ package com.lmax.angler.monitoring.network.monitor.socket;
 
 import org.agrona.collections.Long2ObjectHashMap;
 import org.agrona.collections.LongHashSet;
-import org.agrona.collections.LongIterator;
+import org.agrona.collections.LongHashSet.LongIterator;
 
 /**
  * Repository for sockets that are currently being monitored.

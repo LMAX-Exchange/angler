@@ -26,7 +26,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.agrona:agrona:0.9.6'
+    compile 'org.agrona:agrona:0.9.21'
     testCompile "junit:junit:4.12"
 }
 
