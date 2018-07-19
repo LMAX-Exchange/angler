@@ -111,6 +111,19 @@ signing {
     sign configurations.archives
 }
 
+task bundleJar(type: Jar) {
+
+    manifest.attributes('Built-By': System.properties['user.name'],
+            'Bundle-Name': fullName,
+            'Bundle-Vendor': teamName,
+            'Bundle-Description': fullDescription,
+            'Bundle-DocURL': siteUrl)
+
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { deployment -> signing.signPom(deployment) }
