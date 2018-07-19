@@ -15,6 +15,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 final class TcpColumnHandler implements TokenHandler
 {
+    private static final int TCP_SOCKET_IDENTIFIER_COLUMN =
+            Integer.getInteger("angler.tcp.socketIdentifierColumn", 1);
     private static final short HEADER_ROW_FIRST_COLUMN_VALUE = ByteBuffer.wrap("sl".getBytes(UTF_8)).getShort();
     private final Consumer<TcpStatsEntry> bufferStatsEntryConsumer;
     private final TcpStatsEntry entry = new TcpStatsEntry();
@@ -40,31 +42,32 @@ final class TcpColumnHandler implements TokenHandler
 
         if(!headerRow)
         {
-            switch (currentColumn)
+            if (currentColumn == TCP_SOCKET_IDENTIFIER_COLUMN)
             {
-                case 1:
-                    // do local address
-                    //00000000:4E50
-                    final long socketIpv4Address = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
-                    final long socketPortNumber = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
-                    entry.setSocketIdentifier(SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
-                    break;
-                case 4:
-                    // do tx/rx queue
-                    // hex
-                    //00000000:00000000
-                    final long transmitQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
-                    final long receiveQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
-                    entry.setTransmitQueueDepth(transmitQueueDepth);
-                    entry.setReceiveQueueDepth(receiveQueueDepth);
-                    break;
-                case 9:
-                    // do inode
-                    final long inode = AsciiBytesToLongDecoder.decodeAscii(src, startPosition, endPosition);
-                    entry.setInode(inode);
-                    break;
-                default:
-                    break;
+                // do local address
+                //00000000:4E50
+                final long socketIpv4Address = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
+                final long socketPortNumber = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
+                entry.setSocketIdentifier(SocketIdentifier.fromLinuxKernelHexEncodedAddressAndPort(socketIpv4Address, socketPortNumber));
+
+            }
+            else if (currentColumn == 4)
+            {
+                // do tx/rx queue
+                // hex
+                //00000000:00000000
+                final long transmitQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition, startPosition + 8);
+                final long receiveQueueDepth = HexToLongDecoder.UPPER_CASE.decodeHex(src, startPosition + 9, endPosition);
+                entry.setTransmitQueueDepth(transmitQueueDepth);
+                entry.setReceiveQueueDepth(receiveQueueDepth);
+
+            }
+            else if (currentColumn == 9)
+            {
+                // do inode
+                final long inode = AsciiBytesToLongDecoder.decodeAscii(src, startPosition, endPosition);
+                entry.setInode(inode);
+
             }
         }
 
