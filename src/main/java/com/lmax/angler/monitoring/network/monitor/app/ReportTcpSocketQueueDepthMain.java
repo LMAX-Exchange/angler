@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 public final class ReportTcpSocketQueueDepthMain implements
         SocketMonitoringLifecycleListener, TcpSocketStatisticsHandler, Runnable
 {
+    private static final long SAMPLE_INTERVAL_MS = Long.getLong("angler.tcp.sample.ms", 1000);
     private final TcpSocketMonitor tcpSocketMonitor;
 
     public static void main(String[] args) throws UnknownHostException
@@ -32,7 +33,7 @@ public final class ReportTcpSocketQueueDepthMain implements
     private void start()
     {
         Executors.newSingleThreadScheduledExecutor().
-                scheduleAtFixedRate(this, 1, 1, TimeUnit.SECONDS);
+                scheduleAtFixedRate(this, SAMPLE_INTERVAL_MS, SAMPLE_INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override
